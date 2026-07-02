@@ -1,554 +1,267 @@
 # 🍞 GA Toasts
 
-A modern, accessible, and feature-rich toast notification library for web applications. Built with pure vanilla JavaScript (no dependencies), GA Toasts provides beautiful, customizable notifications with smooth animations and excellent user experience.
-
-![GA Toasts Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Vanilla JS](https://img.shields.io/badge/JavaScript-Vanilla%20JS-yellow)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Size](https://img.shields.io/badge/Size-~12KB-orange)
-
-**Live Demo:** [https://harshad-pindoriya.github.io/gatoasts/](https://harshad-pindoriya.github.io/gatoasts/)
-
-## ✨ Features
-
-- 🎨 **Modern Design** - Beautiful glassmorphism effects, gradients, and smooth animations
-- ♿ **Accessible** - Built with accessibility in mind, supporting screen readers and keyboard navigation
-- 📱 **Responsive** - Fully responsive design that works on all device sizes
-- 🎭 **Multiple Variants** - Support for filled, light, and default variants
-- ⚡ **Performance** - Lightweight and optimized for performance (no jQuery dependency)
-- 🔧 **Customizable** - Highly customizable with CSS variables and themes
-- 🎯 **Multiple Positions** - 9 different positioning options
-- 🎪 **Animation Effects** - Fade, slide, bounce, and scale animations
-- ⏱️ **Smart Timing** - Auto-close with pause on hover functionality
-- 📊 **Progress Indicators** - Visual progress bars and background fills
-- 🎨 **Theme Support** - Light, dark, and system theme modes
-- 🔄 **Toast Management** - Update, close, and manage multiple toasts
-- 🚀 **Zero Dependencies** - Pure vanilla JavaScript with no external libraries required
-
-## 🚀 Quick Start
-
-### Installation
-
-1. **Download the files:**
-   ```bash
-   # Clone or download the repository
-   git clone https://github.com/your-username/ga-toasts.git
-   cd ga-toasts
-   ```
-
-2. **Include the library:**
-   ```html
-   <!-- GA Toasts CSS -->
-   <link rel="stylesheet" href="src/variables.css">
-   <link rel="stylesheet" href="src/toasts.css">
-   
-   <!-- GA Toasts JavaScript (Pure Vanilla JS - No Dependencies) -->
-   <script src="src/toasts.js"></script>
-   ```
-
-   **Note:** No external dependencies required! The library exposes a single global `GaToasts` object in the browser.
-
-3. **Initialize (optional):**
-   ```javascript
-   // Auto-initializes on document ready
-   // Manual initialization if needed (usually not required)
-   GaToasts.init && GaToasts.init();
-
-   GaToasts.success('Hello World!');
-   ```
-
-### Basic Usage
-
-```javascript
-// Simple success toast (title is required)
-GaToasts.success('Operation completed successfully!', { title: 'Success' });
-
-// Simple error toast (title is required)
-GaToasts.error('Something went wrong!', { title: 'Error' });
-
-// Simple warning toast (title is required)
-GaToasts.warning('Please check your input', { title: 'Warning' });
-
-// Simple info toast (title is required)
-GaToasts.info('Here is some information', { title: 'Info' });
-
-// Custom toast (title is required)
-GaToasts.show({
-    title: 'Custom Toast',
-    message: 'This is a custom toast notification',
-    type: 'info',
-    duration: 5000
-});
-```
-
-## 📚 API Reference
-
-### Core Methods
-
-#### `GaToasts.show(options)`
-
-Creates and displays a toast notification.
-
-**Parameters:**
-- `options` (Object) - Configuration object
-
-**Options:**
-```javascript
-{
-    id: 'unique-id',                    // Unique identifier
-    title: 'Toast Title',               // Toast title (REQUIRED)
-    message: 'Toast message',           // Toast message content (optional)
-    type: 'info',                       // Toast type: 'success', 'error', 'warning', 'info', 'primary', 'secondary'
-    duration: 5000,                     // Auto-close duration in ms (0 = no auto-close)
-    closable: true,                     // Show close button
-    position: 'top-end',                // Position: 'top-start', 'top-center', 'top-end', 'middle-start', 'middle-center', 'middle-end', 'bottom-start', 'bottom-center', 'bottom-end'
-    icon: '<svg>...</svg>',             // Custom icon HTML
-    actions: [],                        // Action buttons array
-    size: 'md',                         // Size: 'xs', 'sm', 'md', 'lg', 'xl'
-    variant: '',                        // Variant: '', 'filled', 'light'
-    animation: 'slide',                 // Animation: 'fade', 'slide', 'bounce', 'scale'
-    clickToClose: false,                // Close on click
-    progress: true,                     // Show progress bar
-    progressBackground: true,           // Show background fill
-    pauseOnHover: true,                 // Pause countdown on hover
-    glassmorphism: true                 // Enable glassmorphism effect
-}
-```
-
-#### `GaToasts.success(message, options)`
-
-Creates a success toast.
-
-```javascript
-GaToasts.success('Operation completed!', {
-    title: 'Success',
-    duration: 3000,
-    position: 'top-center'
-});
-```
-
-#### `GaToasts.error(message, options)`
-
-Creates an error toast.
-
-```javascript
-GaToasts.error('Something went wrong!', {
-    title: 'Error',
-    duration: 8000,
-    closable: true
-});
-```
-
-#### `GaToasts.warning(message, options)`
-
-Creates a warning toast.
-
-```javascript
-GaToasts.warning('Please check your input', {
-    title: 'Warning',
-    duration: 6000
-});
-```
-
-#### `GaToasts.info(message, options)`
-
-Creates an info toast.
-
-```javascript
-GaToasts.info('Here is some information', {
-    title: 'Info',
-    duration: 4000
-});
-```
-
-#### `GaToasts.confirm(message, options)`
-
-Creates a confirmation toast with action buttons.
-
-```javascript
-GaToasts.confirm('Are you sure you want to delete this item?', {
-    onConfirm: function() {
-        console.log('Confirmed');
-    },
-    onCancel: function() {
-        console.log('Cancelled');
-    }
-});
-```
-
-#### `GaToasts.loading(message, options)`
-
-Creates a loading toast.
-
-```javascript
-const loadingToast = GaToasts.loading('Processing...');
-
-// Close when done
-setTimeout(() => {
-    GaToasts.close(loadingToast);
-    GaToasts.success('Done!');
-}, 3000);
-```
-
-### Management Methods
-
-#### `GaToasts.close(toast)`
-
-Closes a specific toast.
-
-```javascript
-const toast = GaToasts.show({ message: 'Test' });
-GaToasts.close(toast);
-// or
-GaToasts.close('#toast-id');
-```
-
-#### `GaToasts.closeAll()`
-
-Closes all visible toasts.
-
-```javascript
-GaToasts.closeAll();
-```
-
-#### `GaToasts.clear(type)`
-
-Clears all toasts of a specific type.
-
-```javascript
-GaToasts.clear('error'); // Clear only error toasts
-GaToasts.clear();        // Clear all toasts
-```
-
-#### `GaToasts.update(toastId, options)`
-
-Updates an existing toast.
-
-```javascript
-const toast = GaToasts.show({
-    id: 'updateable-toast',
-    message: 'Initial message',
-    type: 'info'
-});
-
-// Update after 2 seconds
-setTimeout(() => {
-    GaToasts.update('updateable-toast', {
-        message: 'Updated message!',
-        type: 'success'
-    });
-}, 2000);
-```
-
-#### `GaToasts.getCount(type)`
-
-Gets the count of visible toasts.
-
-```javascript
-const totalCount = GaToasts.getCount();
-const errorCount = GaToasts.getCount('error');
-```
-
-#### `GaToasts.exists(toastId)`
-
-Checks if a toast exists.
-
-```javascript
-if (GaToasts.exists('my-toast')) {
-    console.log('Toast exists');
-}
-```
-
-#### `GaToasts.get(toastId)`
-
-Gets a toast element by ID.
-
-```javascript
-const toast = GaToasts.get('my-toast');
-```
-
-### Utility Methods
-
-#### `GaToasts.modern(message, options)`
-
-Creates a modern-styled toast with enhanced features.
-
-```javascript
-GaToasts.modern('Modern toast with enhanced styling!', {
-    type: 'success',
-    glassmorphism: true
-});
-```
-
-#### `GaToasts.notification(title, message, options)`
-
-Creates a notification-style toast.
-
-```javascript
-GaToasts.notification('New Message', 'You have a new message from John', {
-    type: 'info',
-    duration: 5000
-});
-```
-
-#### `GaToasts.setDefaults(defaults)`
-
-Sets global default options.
-
-```javascript
-GaToasts.setDefaults({
-    position: 'top-center',
-    duration: 3000,
-    animation: 'fade'
-});
-```
-
-## 🎨 Customization
-
-### CSS Variables
-
-GA Toasts uses CSS custom properties for easy theming:
-
-```css
-:root {
-    /* Colors */
-    --ga-primary: #0073aa;
-    --ga-success: #00a32a;
-    --ga-error: #d63638;
-    --ga-warning: #dba617;
-    --ga-info: #72aee6;
-    
-    /* Spacing */
-    --ga-space-sm: 8px;
-    --ga-space-md: 16px;
-    --ga-space-lg: 24px;
-    
-    /* Typography */
-    --ga-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --ga-text-sm: 14px;
-    --ga-text-base: 16px;
-    
-    /* Animations */
-    --ga-duration-300: 300ms;
-    --ga-ease-out: cubic-bezier(0, 0, 0.2, 1);
-}
-```
-
-### Themes
-
-#### Light Theme (Default)
-```html
-<html data-ga-theme="light">
-```
-
-#### Dark Theme
-```html
-<html data-ga-theme="dark">
-```
-
-#### System Theme
-```html
-<html data-ga-theme="system">
-```
-
-### Custom Styling
-
-```css
-/* Custom toast styles */
-.ga-toast.my-custom-toast {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border: 2px solid #fff;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.ga-toast.my-custom-toast .ga-toast-title {
-    color: white;
-    font-weight: 700;
-}
-
-.ga-toast.my-custom-toast .ga-toast-body {
-    color: rgba(255, 255, 255, 0.9);
-}
-```
-
-## 📱 Responsive Design
-
-GA Toasts automatically adapts to different screen sizes:
-
-- **Desktop**: Full-width toasts with all features
-- **Tablet**: Optimized spacing and sizing
-- **Mobile**: Full-width toasts with simplified layout
-
-### Mobile Optimizations
-
-- Touch-friendly close buttons
-- Optimized spacing for small screens
-- Simplified animations for better performance
-- Stacked layout for multiple toasts
-
-## ♿ Accessibility
-
-GA Toasts is built with accessibility in mind:
-
-- **Screen Reader Support**: Proper ARIA labels and roles
-- **Keyboard Navigation**: Full keyboard support
-- **High Contrast**: Support for high contrast mode
-- **Reduced Motion**: Respects user's motion preferences
-- **Focus Management**: Proper focus handling
-
-### Accessibility Features
-
-```javascript
-// Toast with proper ARIA attributes
-GaToasts.show({
-    message: 'Important notification',
-    type: 'error',
-    role: 'alert',  // For screen readers
-    duration: 0     // Don't auto-close important messages
-});
-```
-
-## 🎪 Animation Effects
-
-### Built-in Animations
-
-1. **Fade** - Smooth opacity transition
-2. **Slide** - Slides in from the side
-3. **Bounce** - Bouncy entrance effect
-4. **Scale** - Scales up from center
-
-### Custom Animations
-
-```css
-/* Custom shake animation */
-.ga-toast-shake {
-    animation: shake 0.5s ease-in-out;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-    20%, 40%, 60%, 80% { transform: translateX(2px); }
-}
-```
-
-## 🔧 Advanced Usage
-
-### Action Buttons
-
-```javascript
-GaToasts.show({
-    message: 'File uploaded successfully!',
-    type: 'success',
-    actions: [
-        {
-            text: 'View File',
-            class: 'ga-btn-primary',
-            click: function(e, toast) {
-                // Handle view action
-                window.open('/file.pdf');
-                GaToasts.close(toast);
-            }
-        },
-        {
-            text: 'Dismiss',
-            class: 'ga-btn-secondary',
-            click: function(e, toast) {
-                GaToasts.close(toast);
-            }
-        }
-    ]
-});
-```
-
-### Custom Icons
-
-```javascript
-GaToasts.show({
-    message: 'Custom icon toast',
-    type: 'info',
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
-});
-```
-
-### Progress Indicators
-
-```javascript
-// Toast with progress bar
-GaToasts.show({
-    message: 'Processing...',
-    type: 'info',
-    progress: true,
-    duration: 5000
-});
-
-// Toast with background fill
-GaToasts.show({
-    message: 'Uploading file...',
-    type: 'primary',
-    progressBackground: true,
-    duration: 10000
-});
-```
-
-### Toast Stacks
-
-```javascript
-// Show multiple toasts in a stack
-for (let i = 1; i <= 5; i++) {
-    setTimeout(() => {
-        GaToasts.show({
-            message: `Stacked toast ${i}`,
-            type: 'info',
-            size: 'sm'
-        });
-    }, i * 200);
-}
-```
-
-## 🌐 Browser Support
-
-- **Chrome** 60+
-- **Firefox** 55+
-- **Safari** 12+
-- **Edge** 79+
-- **IE** 11+ (with polyfills for modern features)
-
-**Note:** Since we removed jQuery dependency, the library is now lighter and faster while maintaining the same browser support.
-
-## 📦 File Structure
-
-```
-ga-toasts/
-├── src/
-│   ├── toasts.js          # JavaScript functionality
-│   ├── toasts.css         # Main toast styles
-│   └── variables.css      # CSS custom properties
-├── index.html             # Interactive demo page
-└── README.md              # This documentation
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Modern CSS features for beautiful styling
-- Web accessibility guidelines for inclusive design
-- Vanilla JavaScript community for inspiration
-- Open source community for continuous improvement
+Modern, accessible, **dependency-free** toast notifications for the web.
+
+[![npm](https://img.shields.io/npm/v/ga-toasts.svg)](https://www.npmjs.com/package/ga-toasts)
+[![types](https://img.shields.io/badge/TypeScript-included-3178c6.svg)](#typescript)
+[![deps](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](#)
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+
+- 🧩 **Zero dependencies** — one small file, works everywhere.
+- 🎞️ **Stacked & animated** — cards stack with depth and fan out on hover, with spring enter/leave and self-drawing stroke icons.
+- ♿ **Actually accessible** — real `aria-live` announcements, `role="alert"` for errors, Escape to dismiss.
+- 🔒 **Safe by default** — messages are rendered as text; opt into HTML only when you want it.
+- 🎨 **Themeable** — light/dark/auto, CSS-variable design tokens, 6 types + `filled`/`light` variants.
+- 📱 **Responsive & touch-friendly** — swipe to dismiss, pause on hover/focus.
+- 🧵 **Framework-agnostic** — use it in React, Vue, Svelte, plain HTML, or on the server (SSR-safe no-op).
+- 🟦 **First-class TypeScript** — types ship in the box.
+
+**Live demo:** https://harshad-pindoriya.github.io/gatoasts/
 
 ---
 
-Made with ❤️ by the GA Toasts team
+## Install
+
+```bash
+npm install ga-toasts
+```
+
+```js
+import { toast } from 'ga-toasts';
+
+toast.success('Profile saved!');
+```
+
+The stylesheet is **injected automatically** on first use — nothing else to import.
+Prefer to manage the CSS yourself? Import it and it won't double-inject:
+
+```js
+import 'ga-toasts/style.css';
+```
+
+### Via `<script>` / CDN (no build step)
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/ga-toasts@2"></script>
+<script>
+  GaToasts.success('It works!');
+  // or the callable shorthand: GaToasts.toast('Hi there');
+</script>
+```
+
+---
+
+## Quick start
+
+```js
+import { toast } from 'ga-toasts';
+
+// Shorthand
+toast('Just so you know…');            // info by default
+
+// Typed helpers
+toast.success('Saved!', { title: 'Done' });
+toast.error('Upload failed', { title: 'Oops' });
+toast.warning('Low disk space');
+toast.info('New version available');
+
+// Full control
+toast.show({
+  title: 'File uploaded',
+  message: 'report.pdf is ready.',
+  type: 'success',
+  position: 'bottom-end',
+  duration: 6000,
+});
+```
+
+### Action buttons
+
+```js
+toast.show({
+  title: 'File uploaded',
+  message: 'What next?',
+  duration: 0, // sticky until dismissed
+  actions: [
+    { text: 'View', className: 'ga-toast-btn-primary', onClick: (e, t) => { open('/file'); t.close(); } },
+    { text: 'Dismiss' }, // closes by default
+  ],
+});
+```
+
+### Confirmations
+
+```js
+toast.confirm('Delete this item?', {
+  confirmText: 'Delete',
+  onConfirm: () => reallyDelete(),
+  onCancel:  () => {},
+});
+```
+
+### Loading & promises
+
+```js
+const t = toast.loading('Uploading…');
+t.update({ type: 'success', message: 'Done!', duration: 4000 });
+
+// Or let a promise drive it:
+toast.promise(saveUser(), {
+  loading: 'Saving…',
+  success: (user) => `Saved ${user.name}`,
+  error:   (err) => `Failed: ${err.message}`,
+});
+```
+
+### Update or close later
+
+Every call returns a **handle**:
+
+```js
+const t = toast.info('Connecting…', { duration: 0 });
+t.update({ message: 'Connected', type: 'success', duration: 3000 });
+t.close();
+
+// Or address a toast by id:
+toast.info('Hang on', { id: 'net' });
+toast.update('net', { message: 'Ready' });
+toast.close('net');       // ← id or '#id', both work
+toast.close('#net');
+```
+
+---
+
+## API
+
+### Creating toasts
+
+| Method | Description |
+| --- | --- |
+| `toast(message, options?)` | Shorthand for an info toast. |
+| `toast.show(options)` | Full-control toast. Returns a `ToastHandle`. |
+| `toast.success/error/warning/info(message, options?)` | Typed helpers. |
+| `toast.loading(message?, options?)` | Sticky spinner toast. |
+| `toast.confirm(message, options?)` | **Modal** two-button confirmation (`onConfirm`/`onCancel`). Renders an `alertdialog` centered over a backdrop that blocks the page; focus is trapped and restored on close. Only one can be open at a time (further calls are ignored until it's answered). |
+| `toast.promise(promise, { loading, success, error }, options?)` | Drives a toast from a promise; resolves/rejects like the input. |
+| `toast.custom(content, options?)` | Render arbitrary content — an HTML string, a DOM element, or a factory returning one. |
+
+### Managing toasts
+
+| Method | Description |
+| --- | --- |
+| `toast.update(id, options)` | Patch an existing toast (title/message/type/icon/duration…). |
+| `toast.close(id \| '#id' \| element)` | Close one toast. |
+| `toast.closeAll()` | Close everything. |
+| `toast.clear(type?)` | Close all, or all of one type. |
+| `toast.getCount(type?)` | How many are on screen. |
+| `toast.exists(id)` / `toast.get(id)` | Look one up. |
+| `toast.setDefaults(options)` | Set global defaults merged into every toast. |
+| `toast.setLogger(fn \| null)` | Receive lifecycle events (`toast:show`, `toast:close`, …). |
+| `toast.injectStyles()` | Manually inject the stylesheet (usually automatic). |
+
+The 1.x global name still works: `import { GaToasts } from 'ga-toasts'` — it's the same object as `toast`.
+
+### Options
+
+| Option | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `title` | `string` | — | Bold heading. |
+| `message` | `string` | — | Body text (escaped unless `html: true`). |
+| `meta` | `string` | — | Small muted line above the message. |
+| `type` | `success \| error \| warning \| info \| primary \| secondary \| loading` | `info` | |
+| `duration` | `number` (ms) | `5000` | `0` = sticky. |
+| `position` | 9 positions (`top-end`, `bottom-center`, …) | `top-end` | |
+| `closable` | `boolean` | `true` | Show the × button. |
+| `html` | `boolean` | `false` | Render `message` as HTML (⚠️ only for trusted content). |
+| `icon` | `string \| false \| null` | auto | Custom icon markup, or `false` to hide. Built-in icons are animated stroke SVGs; pass your own `<img src="…gif">` or `<lottie-player>` markup here for animated icons without adding a dependency. |
+| `actions` | `ToastAction[]` | — | `{ text, className?, onClick?, closeOnClick? }`. |
+| `variant` | `'' \| filled \| light` | `''` | |
+| `size` | `xs \| sm \| md \| lg \| xl` | `md` | Adjusts density. |
+| `swipeToClose` | `boolean` | `true` | Drag horizontally to dismiss. |
+| `pauseOnHover` | `boolean` | `true` | Pause the countdown on hover/focus. |
+| `closeOnEscape` | `boolean` | `true` | Escape dismisses the newest toast. |
+| `progress` | `boolean` | `true` | Countdown bar. |
+| `avatar` / `avatarAlt` | `string` | — | Leading avatar image. |
+| `unread` | `boolean` | `false` | Small unread dot. |
+| `showStatus` / `statusText` | `boolean` / `string` | — | Status chip. |
+| `steps` / `currentStep` | `number` | — | Segmented multi-step indicator. |
+| `glassmorphism` | `boolean` | `true` | Frosted-glass background (auto-disabled under `prefers-reduced-transparency`). |
+| `content` | `string \| HTMLElement \| () => …` | — | Arbitrary content instead of the default layout (used by `toast.custom`). |
+| `moveFocus` | `boolean` | `false` | Move focus into the toast on show, restore on close (used by `confirm`). |
+| `role` | `string` | auto | ARIA role; defaults to `alert` for error/warning, `status` otherwise. |
+| `onShow` / `onClose` | `(handle) => void` | — | Lifecycle callbacks. |
+| `id` | `string` | auto | Reusing an id updates in place instead of duplicating. |
+
+---
+
+## TypeScript
+
+Types are bundled — no `@types` package needed.
+
+```ts
+import { toast, type ToastOptions, type ToastHandle } from 'ga-toasts';
+
+const opts: ToastOptions = { type: 'success', duration: 3000 };
+const handle: ToastHandle = toast.show(opts);
+```
+
+---
+
+## Theming
+
+Toggle dark mode with an attribute or class on any ancestor (or let it follow the OS):
+
+```html
+<html data-ga-theme="dark">   <!-- or class="ga-theme-dark" -->
+```
+
+Everything is driven by namespaced CSS variables you can override:
+
+```css
+.ga-toast-container {
+  --gat-radius: 12px;
+  --gat-width: 420px;
+  --gat-success: #10b981;
+  --gat-error: #ef4444;
+  --gat-info: #3b82f6;
+}
+```
+
+---
+
+## Accessibility
+
+- Toasts announce through a dedicated `aria-live` region — **polite** for info/success, **assertive** (`role="alert"`) for warnings/errors.
+- **Escape** dismisses the newest toast (`closeOnEscape`).
+- The close button and actions are real, focusable `<button>`s with visible focus rings.
+- The countdown pauses on hover **and** keyboard focus.
+- `confirm()` is an `alertdialog`: focus moves to its buttons and returns to the trigger on close.
+- Honors `prefers-reduced-motion` (animations collapse to a fade) and `prefers-reduced-transparency` (glass blur is dropped).
+- Font sizes are in `rem`, so toasts scale with the user's browser font-size setting.
+- **RTL** — set `dir="rtl"` on `<html>`; positions, layout, and enter/exit animations mirror automatically.
+
+---
+
+## Migrating from 1.x
+
+The 1.x API still works, but a few things changed for the better:
+
+- **Messages are now escaped by default.** If you relied on passing HTML in `message`, add `html: true`.
+- **Action buttons:** prefer `className`/`onClick` over `class`/`click` (the old names still work).
+- **Sizes** (`xs`–`xl`) now change *density*, not width — all toasts share one width (set `--gat-width` to change it).
+- Calls return a **`ToastHandle`** (`{ id, el, update(), close() }`) instead of a raw element (`handle.el` is the element).
+- New: `toast.promise()`, the callable `toast()` shorthand, real `aria-live` announcements, and swipe-to-dismiss.
+
+---
+
+## Development
+
+```bash
+npm install
+npm run build   # → dist/ (ESM, CJS, IIFE, .d.ts, ga-toasts.css)
+npm test        # vitest + jsdom
+```
+
+## License
+
+MIT © Harshad Pindoriya

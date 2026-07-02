@@ -1,0 +1,9 @@
+node_modules/
+src/styles.generated.ts
+
+# dist/ is committed so the GitHub Pages demo (index.html) works without CI.
+# It is rebuilt with `npm run build`.
+*.log
+.DS_Store
+coverage/
+.vitest/

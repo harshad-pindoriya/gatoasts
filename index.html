@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-ga-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -127,7 +127,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <meta name="generator" content="GA Toasts Library v1.0.0">
+    <meta name="generator" content="GA Toasts Library v2.0.0">
     <meta name="copyright" content="© 2024 GA Toasts Team. All rights reserved.">
     <meta name="reply-to" content="contact@ga-toasts.com">
     <meta name="owner" content="GA Toasts Team">
@@ -171,14 +171,8 @@
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
     <!-- Performance and Resource Hints -->
-    <link rel="preload" href="src/toasts.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="src/variables.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="dist/ga-toasts.global.js" as="script">
     <link rel="preload" href="images/gennie_logo.png" as="image">
-
-    <!-- Critical Resource Hints -->
-    <link rel="modulepreload" href="src/toasts.js">
-    <link rel="prefetch" href="src/toasts.css">
-    <link rel="prefetch" href="src/variables.css">
 
     <!-- Additional SEO Meta Tags -->
     <meta name="format-detection" content="telephone=no">
@@ -197,10 +191,6 @@
     <!-- <meta name="msvalidate.01" content="your-bing-verification-code"> -->
     <!-- <meta name="yandex-verification" content="your-yandex-verification-code"> -->
 
-    <!-- Additional Performance Hints -->
-    <link rel="preload" href="src/toasts.css" as="style">
-    <link rel="preload" href="src/toasts.js" as="script">
-    <link rel="preload" href="src/variables.css" as="style">
 
     <!-- Enhanced Structured Data -->
     <script type="application/ld+json">
@@ -214,7 +204,7 @@
         "applicationCategory": "WebApplication",
         "operatingSystem": "Web Browser",
         "browserRequirements": "Requires JavaScript enabled browser",
-        "softwareVersion": "1.0.0",
+        "softwareVersion": "2.0.0",
         "releaseNotes": "Initial release with comprehensive toast notification features",
         "offers": {
             "@type": "Offer",
@@ -243,7 +233,7 @@
         },
         "datePublished": "2024-01-01T00:00:00Z",
         "dateModified": "2024-12-19T00:00:00Z",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "programmingLanguage": "JavaScript",
         "runtimePlatform": "Web Browser",
         "softwareRequirements": "jQuery 3.0+",
@@ -272,13 +262,13 @@
         "inLanguage": "en-US",
         "isAccessibleForFree": true,
         "license": "MIT",
-        "downloadUrl": " https://harshad-pindoriya.github.io/gatoasts/src/toasts.js",
+        "downloadUrl": " https://harshad-pindoriya.github.io/gatoasts/dist/ga-toasts.global.js",
         "installUrl": "https://www.npmjs.com/package/ga-toasts",
         "codeRepository": "https://github.com/ga-toasts/ga-toasts",
         "mainEntityOfPage": " https://harshad-pindoriya.github.io/gatoasts/",
         "potentialAction": {
             "@type": "DownloadAction",
-            "target": " https://harshad-pindoriya.github.io/gatoasts/src/toasts.js",
+            "target": " https://harshad-pindoriya.github.io/gatoasts/dist/ga-toasts.global.js",
             "name": "Download GA Toasts Library"
         }
     }
@@ -406,629 +396,311 @@
     }
     </script>
 
-    <!-- CSS Dependencies -->
-    <link rel="stylesheet" href="src/variables.css">
-    <link rel="stylesheet" href="src/toasts.css">
-    <link rel="stylesheet" href="src/demo.css">
-
-    <!-- GA Toasts JavaScript -->
-    <script src="src/toasts.js"></script>
-
+    <!-- GA Toasts injects its own styles; the demo page styling is inline below. -->
 </head>
 
 <body>
-    <!-- Skip to main content for accessibility -->
+    <style>
+      * { box-sizing: border-box; }
+      .demo-page {
+        --bg: #f7f8fb; --panel: #ffffff; --ink: #0f172a; --soft: #475569; --muted: #64748b;
+        --border: rgba(15, 23, 42, 0.1); --accent: #6366f1;
+        --code-bg: #0f1420; --code-ink: #cbd5e1;
+        --c-str: #7ee0a1; --c-com: #6b7a90; --c-kw: #c792ea; --c-obj: #67b7ff; --c-fn: #ffd479; --c-num: #f7a072;
+      }
+      html[data-ga-theme='dark'] .demo-page {
+        --bg: #0b0d12; --panel: #14171e; --ink: #f8fafc; --soft: #cbd5e1; --muted: #94a3b8;
+        --border: rgba(255, 255, 255, 0.1); --code-bg: #0a0d15;
+      }
+      body { margin: 0; }
+      .demo-page {
+        min-height: 100vh; color: var(--ink);
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        background:
+          radial-gradient(900px 480px at 88% -8%, rgba(99, 102, 241, 0.16), transparent),
+          radial-gradient(700px 420px at 0% 8%, rgba(16, 163, 74, 0.08), transparent),
+          var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+      .skip-link { position: absolute; left: -9999px; }
+      .skip-link:focus { left: 12px; top: 12px; background: #fff; padding: 8px 12px; border-radius: 8px; z-index: 10; }
+      .wrap { max-width: 960px; margin: 0 auto; padding: 46px 20px 40px; }
+
+      .demo-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+      h1 { font-size: clamp(30px, 5vw, 44px); margin: 0; letter-spacing: -0.03em; }
+      .subtitle { color: var(--soft); font-size: 17px; margin: 12px 0 0; max-width: 640px; line-height: 1.55; }
+      .toolbar { display: flex; gap: 8px; }
+      .tbtn { border: 1px solid var(--border); background: var(--panel); color: var(--ink); border-radius: 10px; padding: 9px 13px; cursor: pointer; font-size: 14px; font-weight: 600; white-space: nowrap; }
+      .tbtn:hover { border-color: var(--accent); }
+
+      section { margin-top: 44px; }
+      .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 16px; font-weight: 700; }
+
+      /* Getting started */
+      .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .step { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+      .step .n { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+      .step h3 { margin: 12px 0 8px; font-size: 15px; }
+      .step code { display: block; background: var(--code-bg); color: var(--code-ink); padding: 10px 12px; border-radius: 9px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 13px; overflow-x: auto; }
+
+      /* Examples */
+      .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+      .controls label { font-size: 14px; color: var(--muted); font-weight: 600; }
+      select { border: 1px solid var(--border); background: var(--panel); color: var(--ink); border-radius: 9px; padding: 8px 10px; font-size: 14px; }
+      .example-wrap { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      .code-card { background: var(--code-bg); border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 16px 40px -20px rgba(0,0,0,0.5); }
+      .code-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+      .code-bar .dot { width: 11px; height: 11px; border-radius: 50%; }
+      .code-bar .dot.r { background: #ff5f57; } .code-bar .dot.y { background: #febc2e; } .code-bar .dot.g { background: #28c840; }
+      .code-bar .name { margin-left: 8px; color: #8b98ad; font-size: 13px; font-family: ui-monospace, monospace; }
+      pre.code { margin: 0; padding: 20px 18px; color: var(--code-ink); font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.6; overflow-x: auto; min-height: 120px; }
+      .c-str { color: var(--c-str); } .c-com { color: var(--c-com); font-style: italic; } .c-kw { color: var(--c-kw); } .c-obj { color: var(--c-obj); } .c-fn { color: var(--c-fn); } .c-num { color: var(--c-num); }
+
+      .ex-group { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 10px; }
+      .ex-group:first-child { margin-top: 4px; }
+      .examples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      button.ex { border: 1px solid var(--border); background: var(--panel); color: var(--ink); border-radius: 11px; padding: 13px 14px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: left; transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease; }
+      button.ex:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -10px rgba(0,0,0,.3); border-color: var(--accent); }
+      button.ex[aria-pressed='true'] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+      button.ex .d { display: block; font-weight: 500; font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+      a { color: var(--accent); }
+      .site-footer { margin-top: 64px; padding-top: 8px; color: var(--muted); font-size: 14px; }
+      .foot-top { display: flex; justify-content: space-between; gap: 36px; flex-wrap: wrap; }
+      .foot-brand { max-width: 340px; }
+      .foot-logo { font-weight: 700; font-size: 16px; color: var(--ink); }
+      .foot-brand p { margin: 8px 0 14px; line-height: 1.55; }
+      .foot-install code { display: inline-block; background: var(--code-bg); color: var(--code-ink); padding: 8px 12px; border-radius: 9px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 13px; }
+      /* In dark mode the code-bg matches the near-black page, so the chip vanishes — use a subtle elevated fill instead. */
+      html[data-ga-theme='dark'] .foot-install code { background: rgba(255, 255, 255, 0.07); color: var(--ink); }
+      .foot-cols { display: flex; gap: 52px; flex-wrap: wrap; }
+      .foot-col h4 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 12px; font-weight: 700; }
+      .foot-col a { display: block; color: var(--soft); text-decoration: none; margin-bottom: 9px; }
+      .foot-col a:hover { color: var(--accent); }
+      .foot-bottom { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 26px; font-size: 13px; }
+      @media (max-width: 640px) { .foot-top { flex-direction: column; gap: 24px; } }
+      @media (max-width: 640px) { .steps, .examples { grid-template-columns: 1fr; } }
+    </style>
+
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- Main demo / documentation area -->
-    <main class="container" id="main-content">
-        <h1>🚀 GA Toasts - Best JavaScript Toast Notifications Library 2024</h1>
-        <p class="subtitle">The ultimate JavaScript toast notifications library! Beautiful, modern, and accessible toast
-            notifications that elevate your web applications with smooth animations and intuitive design. Featuring 15+
-            types, 9 positions, 4 animations, and 3 themes. Perfect for React, Vue, Angular, and vanilla JavaScript
-            projects.</p>
-
-        <!-- Global Theme Switcher -->
-        <div class="demo-section" aria-label="Theme switcher">
-            <h2>Appearance</h2>
-            <p class="subtitle subtitle-compact">
-                Switch between light, dark, or system theme. Your choice is remembered for future visits.
+    <div class="demo-page">
+      <main class="wrap" id="main-content">
+        <header class="demo-head">
+          <div>
+            <h1>🍞 GA Toasts</h1>
+            <p class="subtitle">
+              Modern, accessible, dependency-free toast notifications. Click an example to fire it —
+              the exact code appears above. Toasts stack and fan out on hover.
             </p>
-            <div class="theme-controls">
-                <button class="theme-btn active" data-theme="light" onclick="setTheme('light', this)">Light
-                    Theme</button>
-                <button class="theme-btn" data-theme="dark" onclick="setTheme('dark', this)">Dark Theme</button>
-                <button class="theme-btn" data-theme="system" onclick="setTheme('system', this)">System Theme</button>
-            </div>
-        </div>
+          </div>
+          <div class="toolbar">
+            <button class="tbtn" id="rtl">⇄ RTL</button>
+            <button class="tbtn" id="theme">🌙 Dark</button>
+          </div>
+        </header>
 
-        <!-- SEO Content Section -->
-        <div class="seo-content">
-            <h2>Why Choose GA Toasts for Your Next Project?</h2>
-            <p>GA Toasts is the most comprehensive and modern JavaScript toast notifications library available in 2024.
-                Whether you're building a React application, Vue.js project, Angular app, or using vanilla JavaScript,
-                GA Toasts provides everything you need for beautiful, accessible, and performant toast notifications.
-            </p>
-
-            <h3>🎯 Key Benefits:</h3>
-            <ul>
-                <li><strong>Framework Agnostic:</strong> Works seamlessly with React, Vue, Angular, and vanilla
-                    JavaScript</li>
-                <li><strong>Lightweight & Fast:</strong> Minimal bundle size with optimized performance</li>
-                <li><strong>Accessibility First:</strong> Built with ARIA attributes and keyboard navigation support
-                </li>
-                <li><strong>Mobile Responsive:</strong> Perfect display on all device sizes and orientations</li>
-                <li><strong>Highly Customizable:</strong> Extensive theming options and CSS variable support</li>
-                <li><strong>Modern Design:</strong> Glassmorphism effects, smooth animations, and contemporary styling
-                </li>
-            </ul>
-
-            <p><strong>Perfect for:</strong> Web applications, dashboards, admin panels, e-commerce sites, SaaS
-                platforms, mobile web apps, and any project requiring user feedback notifications.</p>
-        </div>
-
-
-        <!-- Interactive Examples -->
-        <section id="examples" aria-labelledby="basic-toast-types">
-            <section class="demo-section">
-
-                <h2 id="basic-toast-types">Basic Toast Types</h2>
-                <div class="button-grid">
-                    <button class="demo-btn btn-success" onclick="showSuccess()">✨ Success Toast</button>
-                    <button class="demo-btn btn-error" onclick="showError()">❌ Error Toast</button>
-                    <button class="demo-btn btn-warning" onclick="showWarning()">⚠️ Warning Toast</button>
-                    <button class="demo-btn btn-info" onclick="showInfo()">ℹ️ Info Toast</button>
-                    <button class="demo-btn btn-primary" onclick="showPrimary()">🔵 Primary Toast</button>
-                    <button class="demo-btn btn-secondary" onclick="showSecondary()">⚪ Secondary Toast</button>
-                </div>
-
-                <div class="code-block">
-                    <pre>// Basic toast types (title is required)
-    GaToasts.success('Operation completed successfully!', { title: 'Success' });
-    GaToasts.error('Something went wrong!', { title: 'Error' });
-    GaToasts.warning('Please check your input', { title: 'Warning' });
-    GaToasts.info('Here is some information', { title: 'Info' });
-    GaToasts.show({ 
-        type: 'primary', 
-        title: 'Primary Notification',
-        message: 'Primary notification' 
-    });
-    GaToasts.show({ 
-        type: 'secondary', 
-        title: 'Secondary Notification',
-        message: 'Secondary notification' 
-    });</pre>
-            </section>
-
-
-
-            <!-- Advanced Features -->
-            <section class="demo-section advanced-features-section" aria-labelledby="advanced-features">
-                <h2 id="advanced-features">Advanced Features</h2>
-                <div class="button-grid">
-                    <button class="demo-btn btn-primary" onclick="showWithTitle()">With Title</button>
-                    <button class="demo-btn btn-success" onclick="showWithActions()">With Actions</button>
-                    <button class="demo-btn btn-info" onclick="showConfirmation()">Confirmation</button>
-                    <button class="demo-btn btn-warning" onclick="showLoading()">Loading Toast</button>
-                    <button class="demo-btn btn-error" onclick="showCustomIcon()">Custom Icon</button>
-                    <button class="demo-btn btn-primary" onclick="showModern()">Modern Style</button>
-                    <button class="demo-btn btn-secondary" onclick="showSwipeToClose()">Swipe to Close</button>
-                </div>
-
-                <div class="code-block">
-                    <pre>// Advanced features (title is required)
-GaToasts.show({
-    title: 'New Message',
-    message: 'You have received a new message from John Doe',
-    type: 'info',
-    duration: 5000
-});
-
-GaToasts.show({
-    title: 'File Upload',
-    message: 'File uploaded successfully',
-    type: 'success',
-    actions: [
-        { text: 'View', click: () => console.log('View clicked') },
-        { text: 'Dismiss', click: (e, toast) => GaToasts.close(toast) }
-    ]
-});
-
-GaToasts.confirm('Are you sure you want to delete this item?', {
-    title: 'Confirm Deletion',
-    onConfirm: () => console.log('Confirmed'),
-    onCancel: () => console.log('Cancelled')
-});
-
-// Enable swipe-to-close interaction on touch devices
-GaToasts.show({
-    title: 'Swipe to close',
-    message: 'Drag this toast left or right on touch devices to dismiss it.',
-    type: 'info',
-    swipeToClose: true
-});</pre>
-                </div>
-            </section>
-
-            <!-- Density & Status -->
-            <section class="demo-section" id="density-status">
-                <h2>Density & Status</h2>
-                <div class="button-grid">
-                    <button class="demo-btn btn-primary" onclick="showCompact()">Compact Info</button>
-                    <button class="demo-btn btn-success" onclick="showWithActions()">Status Chip</button>
-                </div>
-
-                <div class="code-block">
-                    <pre>// Compact toast with status chip and inline link
-GaToasts.show({
-    title: 'New Message',
-    message: 'You have received a new message from John Doe. &lt;a href=&quot;#&quot;&gt;Open inbox&lt;/a&gt;',
-    type: 'info',
-    duration: 5000,
-    compact: true,
-    showStatus: true
-});
-
-// Success toast with explicit status text
-GaToasts.show({
-    title: 'Deployed',
-    message: 'Your changes are live.',
-    type: 'success',
-    compact: true,
-    showStatus: true,
-    statusText: 'Production'
-});</pre>
-                </div>
-            </section>
-
-
-            <!-- Toast Variants -->
-            <section class="demo-section" id="variants-sizes">
-                <h2>Toast Variants & Sizes</h2>
-                <div class="button-grid">
-                    <button class="demo-btn btn-primary" onclick="showFilled()">Filled Variant</button>
-                    <button class="demo-btn btn-success" onclick="showLight()">Light Variant</button>
-                    <button class="demo-btn btn-info" onclick="showSmall()">Small Size</button>
-                    <button class="demo-btn btn-warning" onclick="showLarge()">Large Size</button>
-                    <button class="demo-btn btn-error" onclick="showGlassmorphism()">Glassmorphism</button>
-                    <button class="demo-btn btn-secondary" onclick="showGradient()">Gradient Border</button>
-                </div>
-
-                <div class="code-block">
-                    <pre>// Variants and sizes (title is required)
-GaToasts.show({
-    title: 'Filled Variant',
-    message: 'Filled variant toast',
-    type: 'success',
-    variant: 'filled'
-});
-
-GaToasts.show({
-    title: 'Light Variant',
-    message: 'Light variant toast',
-    type: 'info',
-    variant: 'light'
-});
-
-GaToasts.show({
-    title: 'Small Toast',
-    message: 'Small toast',
-    type: 'warning',
-    size: 'sm'
-});
-
-GaToasts.show({
-    title: 'Large Toast',
-    message: 'Large toast with more content',
-    type: 'primary',
-    size: 'lg'
-});</pre>
-                </div>
-            </section>
-
-            <!-- Animations -->
-            <section class="demo-section" id="animation-effects">
-                <h2>Animation Effects</h2>
-                <div class="button-grid">
-                    <button class="demo-btn btn-primary" onclick="showFade()">Fade Animation</button>
-                    <button class="demo-btn btn-success" onclick="showSlide()">Slide Animation</button>
-                    <button class="demo-btn btn-warning" onclick="showBounce()">Bounce Animation</button>
-                    <button class="demo-btn btn-info" onclick="showScale()">Scale Animation</button>
-                    <button class="demo-btn btn-error" onclick="showShake()">Shake Effect</button>
-                    <button class="demo-btn btn-secondary" onclick="showHeartbeat()">Heartbeat Effect</button>
-                </div>
-
-                <div class="code-block">
-                    <pre>// Animation effects (title is required)
-GaToasts.show({
-    title: 'Fade Animation',
-    message: 'Fade animation',
-    type: 'info',
-    animation: 'fade'
-});
-
-GaToasts.show({
-    title: 'Slide Animation',
-    message: 'Slide animation',
-    type: 'success',
-    animation: 'slide'
-});
-
-GaToasts.show({
-    title: 'Bounce Animation',
-    message: 'Bounce animation',
-    type: 'warning',
-    animation: 'bounce'
-});
-
-// Add custom effects after creation
-const toast = GaToasts.show({ 
-    title: 'Custom Effect',
-    message: 'Custom effect', 
-    type: 'info' 
-});
-toast.addClass('ga-toast-shake');</pre>
-                </div>
-            </section>
-
-            <!-- Position Control -->
-            <section class="demo-section" id="position-control">
-                <h2>Position Control</h2>
-                <div class="position-controls">
-                    <button class="position-btn active" onclick="setPosition('top-start')">Top Start</button>
-                    <button class="position-btn" onclick="setPosition('top-center')">Top Center</button>
-                    <button class="position-btn" onclick="setPosition('top-end')">Top End</button>
-                    <button class="position-btn" onclick="setPosition('middle-start')">Middle Start</button>
-                    <button class="position-btn" onclick="setPosition('middle-center')">Middle Center</button>
-                    <button class="position-btn" onclick="setPosition('middle-end')">Middle End</button>
-                    <button class="position-btn" onclick="setPosition('bottom-start')">Bottom Start</button>
-                    <button class="position-btn" onclick="setPosition('bottom-center')">Bottom Center</button>
-                    <button class="position-btn" onclick="setPosition('bottom-end')">Bottom End</button>
-                </div>
-                <button class="demo-btn btn-primary" onclick="showAtPosition()">Show Toast at Selected Position</button>
-
-                <div class="code-block">
-                    <pre>// Position control (title is required)
-GaToasts.show({
-    title: 'Positioned Toast',
-    message: 'Toast at specific position',
-    type: 'info',
-    position: 'top-center'
-});
-
-// Available positions:
-// top-start, top-center, top-end
-// middle-start, middle-center, middle-end  
-// bottom-start, bottom-center, bottom-end</pre>
-                </div>
-            </section>
-
-            <!-- Theme Control -->
-            <section class="demo-section" id="theme-control">
-                <h2>Theme Control</h2>
-                <div class="theme-controls">
-                    <button class="theme-btn active" onclick="setTheme('light')">Light Theme</button>
-                    <button class="theme-btn" onclick="setTheme('dark')">Dark Theme</button>
-                    <button class="theme-btn" onclick="setTheme('system')">System Theme</button>
-                </div>
-                <button class="demo-btn btn-primary" onclick="showThemedToast()">Show Themed Toast</button>
-
-                <div class="code-block">
-                    <pre>// Theme control
-document.documentElement.setAttribute('data-ga-theme', 'dark');
-
-// Available themes:
-// 'light' - Light theme
-// 'dark' - Dark theme  
-// 'system' - Follows system preference</pre>
-                </div>
-            </section>
-
-            <!-- Progress & Timing -->
-            <section class="demo-section" id="progress-timing">
-                <h2>Progress & Timing</h2>
-                <div class="button-grid">
-                    <button class="demo-btn btn-primary" onclick="showWithProgress()">With Progress Bar</button>
-                    <button class="demo-btn btn-success" onclick="showPauseOnHover()">Pause on Hover</button>
-                    <button class="demo-btn btn-warning" onclick="showLongDuration()">Long Duration</button>
-                    <button class="demo-btn btn-info" onclick="showNoAutoClose()">No Auto Close</button>
-                    <button class="demo-btn btn-error" onclick="showClickToClose()">Click to Close</button>
-                    <button class="demo-btn btn-secondary" onclick="showBackgroundFill()">Background Fill</button>
-                </div>
-
-                <div class="code-block">
-                    <pre>// Progress and timing options (title is required)
-GaToasts.show({
-    title: 'Progress Toast',
-    message: 'Toast with progress bar',
-    type: 'info',
-    progress: true,
-    duration: 5000,
-    progressPosition: 'bottom'
-});
-
-GaToasts.show({
-    title: 'Top Progress',
-    message: 'Progress bar at the top edge',
-    type: 'primary',
-    progress: true,
-    duration: 4000,
-    progressPosition: 'top'
-});
-
-GaToasts.show({
-    title: 'No Auto Close',
-    message: 'No auto close',
-    type: 'warning',
-    duration: 0,
-    closable: true,
-    progressPosition: 'none'
-});
-
-GaToasts.show({
-    title: 'Click to Close',
-    message: 'Click to close',
-    type: 'info',
-    clickToClose: true
-});</pre>
-                </div>
-            </section>
-
-            <!-- Toast Management -->
-            <section class="demo-section" id="toast-management">
-                <h2>Toast Management</h2>
-                <div class="button-grid">
-                    <button class="demo-btn btn-primary" onclick="showMultiple()">Show Multiple</button>
-                    <button class="demo-btn btn-success" onclick="updateToast()">Update Toast</button>
-                    <button class="demo-btn btn-warning" onclick="closeAll()">Close All</button>
-                    <button class="demo-btn btn-info" onclick="getCount()">Get Count</button>
-                    <button class="demo-btn btn-error" onclick="clearByType()">Clear by Type</button>
-                    <button class="demo-btn btn-secondary" onclick="showStack()">Show Stack</button>
-                </div>
-
-                <div class="code-block">
-                    <pre>// Toast management (title is required)
-// Show multiple toasts
-for (let i = 1; i <= 3; i++) {
-    GaToasts.info(`Toast ${i}`, { title: `Info ${i}` });
-}
-
-// Update existing toast
-const toast = GaToasts.show({
-    id: 'updateable-toast',
-    title: 'Initial Toast',
-    message: 'Initial message',
-    type: 'info'
-});
-
-setTimeout(() => {
-    GaToasts.update('updateable-toast', {
-        title: 'Updated Toast',
-        message: 'Updated message!',
-        type: 'success'
-    });
-}, 2000);
-
-// Management methods
-GaToasts.closeAll();
-GaToasts.clear('error'); // Clear only error toasts
-const count = GaToasts.getCount();</pre>
-                </div>
-            </section>
-
-            <!-- Features Overview -->
-            <section class="demo-section" id="features-overview">
-                <h2>Key Features</h2>
-                <div class="feature-list">
-                    <div class="feature-item">
-                        <h3>🎨 Modern Design</h3>
-                        <p>Beautiful, modern toast notifications with glassmorphism effects, gradients, and smooth
-                            animations.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>♿ Accessible</h3>
-                        <p>Built with accessibility in mind, supporting screen readers and keyboard navigation.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>📱 Responsive</h3>
-                        <p>Fully responsive design that works perfectly on all device sizes and orientations.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>🎭 Multiple Variants</h3>
-                        <p>Support for filled, light, and default variants with custom styling options.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>⚡ Performance</h3>
-                        <p>Lightweight and optimized for performance with minimal impact on page load times.</p>
-                    </div>
-                    <div class="feature-item">
-                        <h3>🔧 Customizable</h3>
-                        <p>Highly customizable with CSS variables, themes, and extensive configuration options.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Statistics -->
-            <section class="stats" id="stats">
-                <div class="stat-item">
-                    <span class="stat-number">15+</span>
-                    <span class="stat-label">Toast Types</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">9</span>
-                    <span class="stat-label">Positions</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">4</span>
-                    <span class="stat-label">Animations</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">3</span>
-                    <span class="stat-label">Themes</span>
-                </div>
-            </section>
-
-
-        </section>
-    </main>
-
-
-
-    <!-- Demo JavaScript moved to external file -->
-    <script src="src/demo.js"></script>
-
-    <!-- Bottom Sections: Resources, Comparison, and Social Sharing -->
-    <section class="container mt-10" aria-label="Additional resources">
-
-        <!-- Complete Toast Notifications Guide 2024 -->
-        <section class="resource-section mt-0" id="toast-fundamentals">
-            <h2>📚 Complete Toast Notifications Guide 2024</h2>
-            <p>Everything you need to know about implementing modern toast notifications in your web applications. This
-                comprehensive guide covers best practices, accessibility standards, and performance optimization.</p>
-
-            <div class="guide-toc">
-                <h3>Table of Contents:</h3>
-                <ol>
-                    <li><a href="#toast-fundamentals">Toast Notification Fundamentals</a></li>
-                    <li><a href="#accessibility-best-practices">Accessibility Best Practices</a></li>
-                    <li><a href="#performance-optimization">Performance Optimization Techniques</a></li>
-                    <li><a href="#framework-integration">Framework Integration Guide</a></li>
-                    <li><a href="#design-patterns">Modern Design Patterns</a></li>
-                    <li><a href="#troubleshooting">Common Issues & Troubleshooting</a></li>
-                </ol>
-            </div>
-
-            <div class="download-section">
-                <h3>📥 Free Resources</h3>
-                <div class="download-grid">
-                    <div class="download-item">
-                        <h4>📋 Toast Implementation Checklist</h4>
-                        <p>Complete checklist for implementing accessible toast notifications</p>
-                        <a href="#" class="download-btn"
-                            onclick="GaToasts.info('Download link will be available soon!')">Download PDF</a>
-                    </div>
-                    <div class="download-item">
-                        <h4>🎨 Design System Templates</h4>
-                        <p>Ready-to-use design templates for popular frameworks</p>
-                        <a href="#" class="download-btn"
-                            onclick="GaToasts.info('Download link will be available soon!')">Download ZIP</a>
-                    </div>
-                    <div class="download-item">
-                        <h4>⚡ Performance Benchmarks</h4>
-                        <p>Detailed performance comparison with other toast libraries</p>
-                        <a href="#" class="download-btn"
-                            onclick="GaToasts.info('Download link will be available soon!')">View Report</a>
-                    </div>
-                </div>
-            </div>
+        <section aria-labelledby="gs">
+          <p class="eyebrow" id="gs">Getting started</p>
+          <div class="steps">
+            <div class="step"><span class="n">1</span><h3>Install</h3><code>npm install ga-toasts</code></div>
+            <div class="step"><span class="n">2</span><h3>Import</h3><code>import { toast } from 'ga-toasts'</code></div>
+            <div class="step"><span class="n">3</span><h3>Toast anywhere</h3><code>toast.success('Saved!')</code></div>
+          </div>
         </section>
 
-        <!-- Toast Library Comparison 2024 -->
-        <section class="comparison-section" id="library-comparison">
-            <h2>🆚 Toast Library Comparison 2024</h2>
-            <p>See how GA Toasts compares to other popular toast notification libraries in the market.</p>
+        <section aria-labelledby="ex">
+          <p class="eyebrow" id="ex">Examples</p>
+          <div class="controls">
+            <label for="pos">Position</label>
+            <select id="pos">
+              <option>top-end</option><option>top-center</option><option>top-start</option>
+              <option>bottom-end</option><option>bottom-center</option><option>bottom-start</option>
+              <option>middle-center</option>
+            </select>
+            <span style="color:var(--muted);font-size:13px">Click an example ↓</span>
+          </div>
 
-            <div class="comparison-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th>GA Toasts</th>
-                            <th>React Toastify</th>
-                            <th>Vue Toastification</th>
-                            <th>Angular Toastr</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Bundle Size</td>
-                            <td><strong>2.1KB</strong></td>
-                            <td>4.2KB</td>
-                            <td>3.8KB</td>
-                            <td>5.1KB</td>
-                        </tr>
-                        <tr>
-                            <td>Toast Types</td>
-                            <td><strong>15+</strong></td>
-                            <td>6</td>
-                            <td>8</td>
-                            <td>4</td>
-                        </tr>
-                        <tr>
-                            <td>Positions</td>
-                            <td><strong>9</strong></td>
-                            <td>6</td>
-                            <td>6</td>
-                            <td>4</td>
-                        </tr>
-                        <tr>
-                            <td>Animations</td>
-                            <td><strong>4</strong></td>
-                            <td>2</td>
-                            <td>3</td>
-                            <td>1</td>
-                        </tr>
-                        <tr>
-                            <td>Accessibility</td>
-                            <td><strong>Full ARIA</strong></td>
-                            <td>Basic</td>
-                            <td>Basic</td>
-                            <td>Limited</td>
-                        </tr>
-                        <tr>
-                            <td>Framework Support</td>
-                            <td><strong>All</strong></td>
-                            <td>React Only</td>
-                            <td>Vue Only</td>
-                            <td>Angular Only</td>
-                        </tr>
-                    </tbody>
-                </table>
+          <div class="example-wrap">
+            <div class="code-card">
+              <div class="code-bar">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="name" id="code-name">success.js</span>
+              </div>
+              <pre class="code" id="code"></pre>
             </div>
+            <div id="examples"></div>
+          </div>
         </section>
 
-        <!-- Share GA Toasts -->
-        <section class="social-section" id="share-ga-toasts">
-            <h2>🌟 Share GA Toasts</h2>
-            <p>Help spread the word about GA Toasts! Share with your developer community and contribute to the project.
-            </p>
-
-            <div class="social-buttons">
-                <a href="https://twitter.com/intent/tweet?text=Check%20out%20GA%20Toasts%20-%20the%20best%20JavaScript%20toast%20notifications%20library%20in%202024!%20https://ga-toasts.com"
-                    target="_blank" class="social-btn twitter" onclick="GaToasts.success('Thanks for sharing! 🐦')">
-                    <span>🐦</span> Share on Twitter
-                </a>
-                <a href="https://www.linkedin.com/sharing/share-offsite/?url=https://ga-toasts.com" target="_blank"
-                    class="social-btn linkedin" onclick="GaToasts.success('Thanks for sharing! 💼')">
-                    <span>💼</span> Share on LinkedIn
-                </a>
-                <a href="https://github.com/ga-toasts/ga-toasts" target="_blank" class="social-btn github"
-                    onclick="GaToasts.info('Star us on GitHub! ⭐')">
-                    <span>⭐</span> Star on GitHub
-                </a>
-                <a href="https://www.npmjs.com/package/ga-toasts" target="_blank" class="social-btn npm"
-                    onclick="GaToasts.info('Check us out on NPM! 📦')">
-                    <span>📦</span> View on NPM
-                </a>
-        </section>
-
-        <section class="github-badges" aria-label="Project stats">
-                <h3>📊 Project Stats</h3>
-                <div class="badge-grid">
-                    <img src="https://img.shields.io/github/stars/ga-toasts/ga-toasts?style=for-the-badge&logo=github"
-                        alt="GitHub Stars" class="github-badge">
-                    <img src="https://img.shields.io/npm/v/ga-toasts?style=for-the-badge&logo=npm" alt="NPM Version"
-                        class="github-badge">
-                    <img src="https://img.shields.io/npm/dm/ga-toasts?style=for-the-badge&logo=npm" alt="NPM Downloads"
-                        class="github-badge">
-                    <img src="https://img.shields.io/github/license/ga-toasts/ga-toasts?style=for-the-badge"
-                        alt="License" class="github-badge">
-                </div>
+        <footer class="site-footer">
+          <div class="foot-top">
+            <div class="foot-brand">
+              <div class="foot-logo">🍞 GA Toasts</div>
+              <p>Modern, accessible, dependency-free toast notifications for the web.</p>
+              <div class="foot-install"><code>npm i ga-toasts</code></div>
             </div>
-        </section>
+            <div class="foot-cols">
+              <div class="foot-col">
+                <h4>Resources</h4>
+                <a href="https://github.com/harshad-pindoriya/gatoasts#readme">Documentation</a>
+                <a href="https://www.npmjs.com/package/ga-toasts">npm package</a>
+                <a href="https://github.com/harshad-pindoriya/gatoasts">GitHub repo</a>
+              </div>
+              <div class="foot-col">
+                <h4>Community</h4>
+                <a href="https://github.com/harshad-pindoriya/gatoasts/issues">Report an issue</a>
+                <a href="https://github.com/harshad-pindoriya/gatoasts/blob/main/LICENSE">License · MIT</a>
+                <a href="https://github.com/harshad-pindoriya">Author</a>
+              </div>
+            </div>
+          </div>
+          <div class="foot-bottom">
+            <span>© <span id="foot-year">2026</span> Harshad Pindoriya · Released under the MIT License.</span>
+            <span>Built with <span aria-hidden="true">🍞</span> GA Toasts</span>
+          </div>
+        </footer>
+      </main>
+    </div>
 
-    </section>
+    <script src="dist/ga-toasts.global.js"></script>
+    <script>
+      const T = window.GaToasts;
+      const pos = () => document.getElementById('pos').value;
 
-</body>
+      // Keep the footer copyright year current.
+      document.getElementById('foot-year').textContent = new Date().getFullYear();
 
+      // Single-pass tokenizer — safe (no nested-replacement bugs).
+      function highlight(code) {
+        const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const re = /(\/\/[^\n]*)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`)|\b(const|let|await|function|return|new|import|from)\b|\b(toast|GaToasts)\b|\.([a-zA-Z_]\w*)|\b(\d+)\b/g;
+        let out = '', last = 0, m;
+        while ((m = re.exec(code))) {
+          out += esc(code.slice(last, m.index));
+          if (m[1]) out += `<span class="c-com">${esc(m[1])}</span>`;
+          else if (m[2]) out += `<span class="c-str">${esc(m[2])}</span>`;
+          else if (m[3]) out += `<span class="c-kw">${esc(m[3])}</span>`;
+          else if (m[4]) out += `<span class="c-obj">${esc(m[4])}</span>`;
+          else if (m[5]) out += `.<span class="c-fn">${esc(m[5])}</span>`;
+          else if (m[6]) out += `<span class="c-num">${esc(m[6])}</span>`;
+          last = re.lastIndex;
+        }
+        return out + esc(code.slice(last));
+      }
+
+      const EX = [
+        { key: 'success', label: 'Success', desc: 'A confirmation',
+          code: `toast.success('Your changes have been saved.', {\n  title: 'Success',\n})`,
+          run: () => T.success('Your changes have been saved.', { title: 'Success', position: pos() }) },
+        { key: 'error', label: 'Error', desc: 'Something failed',
+          code: `toast.error('Something went wrong. Please retry.', {\n  title: 'Error',\n})`,
+          run: () => T.error('Something went wrong. Please retry.', { title: 'Error', position: pos() }) },
+        { key: 'info', label: 'Info', desc: 'Shorthand call',
+          code: `toast('A new version is available.')`,
+          run: () => T('A new version is available.', { position: pos() }) },
+        { key: 'promise', label: 'Promise', desc: 'loading → result',
+          code: `toast.promise(saveUser(), {\n  loading: 'Saving…',\n  success: (u) => \`Saved \${u.name}\`,\n  error: 'Failed to save',\n})`,
+          run: () => T.promise(
+            new Promise((res, rej) => setTimeout(() => (Math.random() > 0.35 ? res({ name: 'Sam' }) : rej(new Error('network'))), 1500)),
+            { loading: 'Saving…', success: (u) => `Saved ${u.name}`, error: 'Failed to save' }, { position: pos() }).catch(() => {}) },
+        { key: 'confirm', label: 'Confirm (modal)', desc: 'Blocks until answered',
+          code: `toast.confirm('Delete this item? This cannot be undone.', {\n  confirmText: 'Delete',\n  onConfirm: () => toast.success('Deleted.'),\n})`,
+          run: () => T.confirm('Delete this item? This cannot be undone.', { confirmText: 'Delete', onConfirm: () => T.success('Deleted.', { position: pos() }), onCancel: () => {} }) },
+        { key: 'loading', label: 'Loading → done', desc: 'Update in place',
+          code: `const t = toast.loading('Uploading…')\n// later…\nt.update({ type: 'success', message: 'Done!', duration: 3000 })`,
+          run: () => { const t = T.loading('Uploading…', { position: pos() }); setTimeout(() => t.update({ type: 'success', message: 'Upload complete!', duration: 3000 }), 1600); } },
+        { key: 'actions', label: 'Action buttons', desc: 'Interactive',
+          code: `toast.show({\n  title: 'File uploaded',\n  message: 'report.pdf is ready.',\n  duration: 0,\n  actions: [\n    { text: 'View', className: 'ga-toast-btn-primary',\n      onClick: (e, t) => t.close() },\n    { text: 'Dismiss' },\n  ],\n})`,
+          run: () => T.show({ title: 'File uploaded', message: 'report.pdf is ready.', duration: 0, position: pos(), actions: [ { text: 'View', className: 'ga-toast-btn-primary', onClick: (e, t) => { T.success('Opening…', { position: pos() }); t.close(); } }, { text: 'Dismiss' } ] }) },
+        { key: 'custom', label: 'Custom content', desc: 'Any HTML/element',
+          code: `toast.custom(\n  '<div>…your markup / component…</div>',\n  { duration: 6000 },\n)`,
+          run: () => T.custom('<div style="display:flex;gap:12px;align-items:center;padding:14px 16px"><img src="https://i.pravatar.cc/80?img=5" style="width:40px;height:40px;border-radius:10px" alt=""><div><div style="font-weight:600">Jordan invited you</div><div style="opacity:.7;font-size:13px">to the “Design System” project</div></div></div>', { position: pos(), duration: 6000 }) },
+        { key: 'variants', label: 'Filled / Light', desc: 'Style variants',
+          code: `toast.show({ type: 'success', variant: 'filled',\n  title: 'Filled', message: 'High-contrast style.' })\n\ntoast.show({ type: 'info', variant: 'light',\n  title: 'Light', message: 'Soft tinted style.' })`,
+          run: () => { T.show({ type: 'success', variant: 'filled', title: 'Filled', message: 'High-contrast style.', position: pos() }); setTimeout(() => T.show({ type: 'info', variant: 'light', title: 'Light', message: 'Soft tinted style.', position: pos() }), 220); } },
+        { key: 'stack', label: 'Stack of 5', desc: 'Stacking + hover',
+          code: `for (let i = 1; i <= 5; i++)\n  toast('Notification #' + i)`,
+          run: () => { for (let i = 1; i <= 5; i++) setTimeout(() => T('Notification #' + i, { position: pos() }), i * 170); } },
+        { key: 'compact', label: 'Compact', desc: 'One-line',
+          code: `toast.show({ type: 'success',\n  message: 'Copied to clipboard', compact: true })`,
+          run: () => T.show({ type: 'success', message: 'Copied to clipboard', compact: true, position: pos() }) },
+        { key: 'closeall', label: 'Close all', desc: 'Dismiss everything',
+          code: `toast.closeAll()`,
+          run: () => T.closeAll() },
+      ];
+
+      // Examples grouped into categories.
+      const GROUPS = [
+        { title: 'Types', keys: ['success', 'error', 'info'] },
+        { title: 'Style variants', keys: ['variants', 'compact'] },
+        { title: 'Async & interactive', keys: ['promise', 'loading', 'confirm', 'actions', 'custom'] },
+        { title: 'Managing toasts', keys: ['stack', 'closeall'] },
+      ];
+
+      const codeEl = document.getElementById('code');
+      const nameEl = document.getElementById('code-name');
+      const root = document.getElementById('examples');
+
+      function selectExample(ex, btn) {
+        codeEl.innerHTML = highlight(ex.code);
+        nameEl.textContent = ex.key + '.js';
+        root.querySelectorAll('button.ex').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      }
+
+      let firstBtn = null;
+      GROUPS.forEach((group) => {
+        const heading = document.createElement('p');
+        heading.className = 'ex-group';
+        heading.textContent = group.title;
+        root.appendChild(heading);
+
+        const grid = document.createElement('div');
+        grid.className = 'examples';
+        group.keys.forEach((key) => {
+          const ex = EX.find((e) => e.key === key);
+          if (!ex) return;
+          const b = document.createElement('button');
+          b.className = 'ex';
+          b.setAttribute('aria-pressed', 'false');
+          b.innerHTML = `${ex.label}<span class="d">${ex.desc}</span>`;
+          b.addEventListener('click', () => { selectExample(ex, b); ex.run(); });
+          grid.appendChild(b);
+          if (!firstBtn) { firstBtn = b; selectExample(ex, b); } // default code view
+        });
+        root.appendChild(grid);
+      });
+
+      // Theme + direction, persisted across reloads.
+      const LS_THEME = 'ga-toasts:theme', LS_DIR = 'ga-toasts:dir';
+      const de = document.documentElement;
+      const themeBtn = document.getElementById('theme');
+      const rtlBtn = document.getElementById('rtl');
+
+      function applyTheme(mode) {
+        de.setAttribute('data-ga-theme', mode);
+        themeBtn.textContent = mode === 'dark' ? '☀️ Light' : '🌙 Dark';
+        try { localStorage.setItem(LS_THEME, mode); } catch {}
+      }
+      function applyDir(dir) {
+        de.setAttribute('dir', dir);
+        rtlBtn.textContent = dir === 'rtl' ? '⇄ LTR' : '⇄ RTL';
+        try { localStorage.setItem(LS_DIR, dir); } catch {}
+      }
+
+      // Restore saved preferences (falls back to the light/ltr defaults).
+      let savedTheme = 'light', savedDir = 'ltr';
+      try { savedTheme = localStorage.getItem(LS_THEME) || 'light'; savedDir = localStorage.getItem(LS_DIR) || 'ltr'; } catch {}
+      applyTheme(savedTheme);
+      applyDir(savedDir);
+
+      themeBtn.addEventListener('click', () =>
+        applyTheme(de.getAttribute('data-ga-theme') === 'dark' ? 'light' : 'dark'));
+      rtlBtn.addEventListener('click', () => {
+        const next = de.getAttribute('dir') === 'rtl' ? 'ltr' : 'rtl';
+        applyDir(next);
+        T.info(next === 'rtl' ? 'تم التبديل إلى RTL' : 'Switched to LTR', { position: pos() });
+      });
+    </script>
+  </body>
 </html>

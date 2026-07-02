@@ -1,23 +1,72 @@
 {
   "name": "ga-toasts",
-  "version": "1.0.0",
-  "description": "Modern, accessible vanilla JavaScript toast notifications library with 15+ types, 9 positions, and rich theming.",
-  "main": "src/toasts.js",
-  "types": "ga-toasts.d.ts",
+  "version": "2.0.0",
+  "description": "Modern, accessible, dependency-free toast notifications for the web. Stacked animations, 6 types, 9 positions, dark mode, swipe-to-dismiss, and first-class TypeScript support.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/ga-toasts.global.js",
+  "jsdelivr": "./dist/ga-toasts.global.js",
+  "style": "./dist/ga-toasts.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./style.css": "./dist/ga-toasts.css",
+    "./ga-toasts.css": "./dist/ga-toasts.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "gen": "node scripts/gen-styles.mjs",
+    "build": "npm run gen && tsup",
+    "dev": "npm run gen && tsup --watch",
+    "test": "npm run gen && vitest run",
+    "test:watch": "npm run gen && vitest",
+    "prepublishOnly": "npm run build"
+  },
   "keywords": [
     "toast",
+    "toasts",
+    "notification",
     "notifications",
-    "javascript",
+    "snackbar",
+    "alert",
     "vanilla-js",
+    "typescript",
+    "accessible",
+    "a11y",
+    "dark-mode",
     "ui",
     "ga-toasts"
   ],
+  "author": "Harshad Pindoriya",
   "license": "MIT",
-  "author": "",
+  "homepage": "https://harshad-pindoriya.github.io/gatoasts/",
   "repository": {
     "type": "git",
-    "url": "https://harshad-pindoriya.github.io/gatoasts/"
+    "url": "git+https://github.com/harshad-pindoriya/gatoasts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/harshad-pindoriya/gatoasts/issues"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }
-
-
