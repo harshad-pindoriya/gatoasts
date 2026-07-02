@@ -13,7 +13,7 @@ export default defineConfig([
     format: ['esm', 'cjs'],
     dts: true,
     clean: true,
-    sourcemap: true,
+    sourcemap: false, // unminified output is readable without maps; keeps the package small
     treeshake: true,
     outExtension({ format }) {
       return { js: format === 'cjs' ? '.cjs' : '.js' };

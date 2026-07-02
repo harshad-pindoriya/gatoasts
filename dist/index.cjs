@@ -1512,5 +1512,3 @@ var src_default = toast;
 exports.GaToasts = GaToasts;
 exports.default = src_default;
 exports.toast = toast;
-//# sourceMappingURL=index.cjs.map
-//# sourceMappingURL=index.cjs.map

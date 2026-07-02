@@ -1506,5 +1506,3 @@ var GaToasts = toast;
 var src_default = toast;
 
 export { GaToasts, src_default as default, toast };
-//# sourceMappingURL=index.js.map
-//# sourceMappingURL=index.js.map
