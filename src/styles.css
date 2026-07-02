@@ -130,7 +130,7 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 11px;
-  padding: 14px 16px;
+  padding: 12px 16px;
   color: var(--gat-text);
   background: var(--gat-surface-solid);
   border: none;
@@ -179,6 +179,15 @@
    cleaner, more minimal card (à la Sonner/Linear). */
 
 .ga-toast-hide { pointer-events: none; }
+
+/* While a horizontal swipe-to-dismiss is in progress, don't let the drag
+   paint a text selection. Text is fully selectable at rest. */
+.ga-toast-swiping,
+.ga-toast-swiping * {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing;
+}
 
 /* Per-type accent colors. */
 .ga-toast-success { --gat-accent: var(--gat-success); }

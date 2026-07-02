@@ -361,3 +361,95 @@ describe('global defaults', () => {
     toast.setDefaults({ position: 'top-end' });
   });
 });
+
+describe('overflow queue', () => {
+  // Every test here assumes the default cap; guarantee it regardless of order.
+  beforeEach(() => toast.setMaxVisible(3));
+
+  it('shows only maxVisible cards and hides (pushes back) the overflow', () => {
+    for (let i = 0; i < 4; i++)
+      toast.info('n' + i, { id: 'q' + i, position: 'top-end', duration: 0 });
+    expect(toastEls().length).toBe(4);
+    // Newest sits in front; the oldest is pushed behind the visible cap.
+    const oldest = document.getElementById('q0')!;
+    const newest = document.getElementById('q3')!;
+    expect(oldest.style.opacity).toBe('0');
+    expect(oldest.getAttribute('aria-hidden')).toBe('true');
+    expect(newest.style.opacity).toBe('1');
+    toast.closeAll();
+    flushRemovals();
+  });
+
+  it('a queued (hidden) toast does not auto-expire — it waits, then surfaces', () => {
+    // Without the fix, the hidden oldest would count down while invisible and
+    // be gone by ~1000ms. With the queue its timer is frozen until it surfaces.
+    for (let i = 0; i < 4; i++)
+      toast.info('n' + i, { id: 'w' + i, position: 'bottom-end', duration: 1000 });
+    expect(document.getElementById('w0')!.style.opacity).toBe('0'); // hidden
+
+    // The 3 visible toasts time out and leave.
+    vi.advanceTimersByTime(1000);
+    flushRemovals();
+
+    // The previously-hidden oldest survived and is now the only one left…
+    const survivor = document.getElementById('w0');
+    expect(survivor).not.toBeNull();
+    expect(survivor!.style.opacity).toBe('1'); // …and it surfaced
+    expect(toastEls().length).toBe(1);
+
+    // …its freshly-armed timer then dismisses it normally.
+    vi.advanceTimersByTime(1000);
+    flushRemovals();
+    expect(toastEls().length).toBe(0);
+  });
+
+  it('setMaxVisible re-lays out live: lowering hides, raising surfaces', () => {
+    toast.setMaxVisible(1);
+    toast.info('a', { id: 'm0', position: 'top-start', duration: 0 });
+    toast.info('b', { id: 'm1', position: 'top-start', duration: 0 });
+    expect(document.getElementById('m0')!.style.opacity).toBe('0'); // older hidden
+    expect(document.getElementById('m1')!.style.opacity).toBe('1'); // newest visible
+
+    toast.setMaxVisible(3); // raising the cap surfaces the queued one at once
+    expect(document.getElementById('m0')!.style.opacity).toBe('1');
+    toast.closeAll();
+    flushRemovals();
+  });
+
+  it('exposes dismiss / dismissAll aliases of close / closeAll', () => {
+    expect(toast.dismiss).toBe(toast.close);
+    expect(toast.dismissAll).toBe(toast.closeAll);
+    toast.info('x', { id: 'al', duration: 0 });
+    toast.dismiss('al');
+    flushRemovals();
+    expect(document.getElementById('al')).toBeNull();
+  });
+});
+
+describe('swipe does not paint a text selection', () => {
+  function ptr(type: string, x: number, y: number, target: EventTarget) {
+    target.dispatchEvent(
+      new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: x, clientY: y }),
+    );
+  }
+
+  it('adds the swiping guard class once a horizontal drag commits, and clears it on release', () => {
+    const h = toast.error('Something went wrong', { title: 'Error', duration: 0 });
+    const msg = h.el.querySelector('.ga-toast-message')!;
+    ptr('pointerdown', 200, 20, msg);
+    expect(h.el.classList.contains('ga-toast-swiping')).toBe(false); // press alone: text still selectable
+    ptr('pointermove', 250, 20, h.el); // dx=50, horizontal → commits to a swipe
+    expect(h.el.classList.contains('ga-toast-swiping')).toBe(true);
+    ptr('pointerup', 250, 20, h.el); // snaps back (below fling threshold)
+    expect(h.el.classList.contains('ga-toast-swiping')).toBe(false);
+    expect(document.getElementById(h.id)).not.toBeNull();
+  });
+
+  it('leaves text selectable during a mostly-vertical drag', () => {
+    const h = toast.info('hi', { duration: 0 });
+    ptr('pointerdown', 100, 20, h.el);
+    ptr('pointermove', 110, 80, h.el); // dy (60) dominates dx (10) → not a swipe
+    expect(h.el.classList.contains('ga-toast-swiping')).toBe(false);
+    ptr('pointerup', 110, 80, h.el);
+  });
+});

@@ -142,6 +142,12 @@ declare function confirm(message: string, options?: ConfirmOptions): ToastHandle
 declare function promise<T>(input: Promise<T> | (() => Promise<T>), messages: PromiseMessages<T>, options?: ToastOptions): Promise<T>;
 declare function setDefaults(defaults: ToastOptions): void;
 declare function setLogger(fn: ((event: string, payload: unknown) => void) | null): void;
+/**
+ * How many stacked toasts stay visible per position (default 3). Extra toasts
+ * queue behind the stack with their countdown paused and surface — resuming
+ * their timer — as earlier ones dismiss. Applies to every position instantly.
+ */
+declare function setMaxVisible(count: number): void;
 /** Render arbitrary content (HTML string, element, or a factory) as a toast. */
 declare function custom(content: NonNullable<ToastOptions['content']>, options?: ToastOptions): ToastHandle;
 interface ToastFn {
@@ -157,12 +163,17 @@ interface ToastFn {
     custom: typeof custom;
     close: typeof close;
     closeAll: typeof closeAll;
+    /** Alias of `close` — dismiss one toast by id. */
+    dismiss: typeof close;
+    /** Alias of `closeAll` — dismiss every toast. */
+    dismissAll: typeof closeAll;
     clear: typeof clear;
     update: (id: string, options: Partial<ToastOptions>) => ToastHandle | null;
     get: typeof get;
     exists: typeof exists;
     getCount: typeof getCount;
     setDefaults: typeof setDefaults;
+    setMaxVisible: typeof setMaxVisible;
     setLogger: typeof setLogger;
     injectStyles: typeof injectStyles;
 }

@@ -167,7 +167,7 @@ const PREFIX = 'ga-toast';
 const STYLE_ID = 'ga-toasts-styles';
 const PEEK = 14; // px each stacked card peeks out when collapsed
 const STACK_GAP = 14; // px gap between cards when expanded
-const MAX_VISIBLE = 3; // stacked cards shown before the rest fade out
+let maxVisible = 3; // stacked cards shown before the rest wait their turn (see setMaxVisible)
 const REMOVE_FALLBACK = 450; // ms — safety net if transitionend never fires
 
 interface TimerState {
@@ -175,7 +175,12 @@ interface TimerState {
   remaining: number;
   startedAt: number;
   handle: ReturnType<typeof setTimeout> | null;
-  paused: boolean;
+  /**
+   * Reasons the countdown is currently frozen ('hover', 'focus', 'swipe',
+   * 'tab', 'overflow'). The timer only runs when this set is empty, so a toast
+   * that's both hovered and behind the stack stays paused until *both* clear.
+   */
+  holds: Set<string>;
 }
 
 interface Instance {
@@ -401,6 +406,13 @@ function layout(container: HTMLElement): void {
     let scale: number;
     let opacity: number;
 
+    // Cards past the visible cap wait their turn behind the stack: their
+    // countdown is frozen (so a burst can't silently expire off-screen) until
+    // an earlier toast clears and this one surfaces.
+    const overflow = frontIndex >= maxVisible;
+    if (overflow) pauseTimer(inst, 'overflow');
+    else resumeTimer(inst, 'overflow');
+
     if (expanded || reduce) {
       translateY = dir * cumulative;
       scale = 1;
@@ -408,7 +420,7 @@ function layout(container: HTMLElement): void {
     } else {
       translateY = dir * frontIndex * PEEK;
       scale = Math.max(1 - frontIndex * 0.05, 0.85);
-      opacity = frontIndex >= MAX_VISIBLE ? 0 : 1;
+      opacity = overflow ? 0 : 1;
     }
 
     const swipe = inst.swipeX ? ` translateX(${inst.swipeX}px)` : '';
@@ -652,25 +664,30 @@ function buildToastElement(opts: Instance['opts'], id: string): {
 function startTimer(inst: Instance): void {
   const { timer } = inst;
   if (timer.duration <= 0 || timer.remaining <= 0) return;
-  timer.paused = false;
+  if (timer.holds.size > 0) return; // held (hover/overflow/tab) — arm later
   timer.startedAt = now();
   timer.handle = setTimeout(() => close(inst.id), timer.remaining);
   animateProgress(inst, timer.remaining);
 }
 
-function pauseTimer(inst: Instance): void {
+/** Freeze the countdown for a reason. Idempotent per reason. */
+function pauseTimer(inst: Instance, reason: string): void {
   const { timer } = inst;
-  if (timer.paused || timer.handle == null) return;
+  const wasHeld = timer.holds.size > 0;
+  timer.holds.add(reason);
+  if (wasHeld || timer.handle == null) return; // already frozen, or not running
   clearTimeout(timer.handle);
   timer.handle = null;
-  timer.paused = true;
   const elapsed = now() - timer.startedAt;
   timer.remaining = Math.max(0, timer.remaining - elapsed);
   freezeProgress(inst);
 }
 
-function resumeTimer(inst: Instance): void {
-  if (!inst.timer.paused) return;
+/** Release one hold; the countdown resumes only once every hold is cleared. */
+function resumeTimer(inst: Instance, reason: string): void {
+  const { timer } = inst;
+  if (!timer.holds.delete(reason)) return; // wasn't holding for this reason
+  if (timer.holds.size > 0) return; // still frozen by another reason
   startTimer(inst);
 }
 
@@ -731,10 +748,10 @@ function attachHandlers(inst: Instance, opts: Instance['opts']): void {
   );
 
   if (opts.pauseOnHover) {
-    el.addEventListener('pointerenter', () => pauseTimer(inst), { signal });
-    el.addEventListener('pointerleave', () => resumeTimer(inst), { signal });
-    el.addEventListener('focusin', () => pauseTimer(inst), { signal });
-    el.addEventListener('focusout', () => resumeTimer(inst), { signal });
+    el.addEventListener('pointerenter', () => pauseTimer(inst, 'hover'), { signal });
+    el.addEventListener('pointerleave', () => resumeTimer(inst, 'hover'), { signal });
+    el.addEventListener('focusin', () => pauseTimer(inst, 'focus'), { signal });
+    el.addEventListener('focusout', () => resumeTimer(inst, 'focus'), { signal });
   }
 
   if (opts.swipeToClose) attachSwipe(inst);
@@ -770,6 +787,7 @@ function attachSwipe(inst: Instance): void {
   const signal = controller.signal;
   const THRESHOLD = 70;
   let dragging = false;
+  let swiping = false; // crossed the horizontal threshold — now a real swipe
   let startX = 0;
   let startY = 0;
 
@@ -780,9 +798,10 @@ function attachSwipe(inst: Instance): void {
       if ((e.target as HTMLElement).closest('button, a, input, textarea, select'))
         return;
       dragging = true;
+      swiping = false;
       startX = e.clientX;
       startY = e.clientY;
-      pauseTimer(inst);
+      pauseTimer(inst, 'swipe');
       try {
         el.setPointerCapture(e.pointerId);
       } catch {
@@ -800,6 +819,18 @@ function attachSwipe(inst: Instance): void {
       const dy = e.clientY - startY;
       if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(dy)) return;
       e.preventDefault();
+      if (!swiping) {
+        // First frame we commit to a horizontal swipe: stop the drag from
+        // painting a text selection, and clear any highlight the initial
+        // few pixels may have started. Text stays selectable when not swiping.
+        swiping = true;
+        el.classList.add('ga-toast-swiping');
+        const sel =
+          typeof window !== 'undefined' && typeof window.getSelection === 'function'
+            ? window.getSelection()
+            : null;
+        sel?.removeAllRanges();
+      }
       inst.swipeX = dx;
       const container = el.parentElement;
       if (container) layout(container);
@@ -810,6 +841,8 @@ function attachSwipe(inst: Instance): void {
   const end = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
+    swiping = false;
+    el.classList.remove('ga-toast-swiping');
     const dx = e.clientX - startX;
     if (Math.abs(dx) > THRESHOLD) {
       const dir = dx > 0 ? 1 : -1;
@@ -821,7 +854,7 @@ function attachSwipe(inst: Instance): void {
       inst.swipeX = 0;
       const container = el.parentElement;
       if (container) layout(container);
-      resumeTimer(inst);
+      resumeTimer(inst, 'swipe');
     }
   };
   el.addEventListener('pointerup', end, { signal });
@@ -852,12 +885,10 @@ function bindVisibility(): void {
     const hidden = document.hidden;
     for (const inst of registry.values()) {
       if (inst.closing || inst.opts.pauseOnPageHidden === false) continue;
-      if (hidden) {
-        pauseTimer(inst);
-      } else if (!(typeof inst.el.matches === 'function' && inst.el.matches(':hover'))) {
-        // Resume unless the pointer is still parked on the toast.
-        resumeTimer(inst);
-      }
+      // Releasing the 'tab' hold won't restart a toast that's still held for
+      // another reason (hover, overflow), so no explicit :hover guard needed.
+      if (hidden) pauseTimer(inst, 'tab');
+      else resumeTimer(inst, 'tab');
     }
   });
 }
@@ -932,7 +963,7 @@ function show(options: ToastOptions = {}): ToastHandle {
     remaining: opts.duration || 0,
     startedAt: 0,
     handle: null,
-    paused: false,
+    holds: new Set<string>(),
   };
 
   const handle: ToastHandle = {
@@ -1338,6 +1369,16 @@ function setLogger(fn: ((event: string, payload: unknown) => void) | null): void
   logger = typeof fn === 'function' ? fn : null;
 }
 
+/**
+ * How many stacked toasts stay visible per position (default 3). Extra toasts
+ * queue behind the stack with their countdown paused and surface — resuming
+ * their timer — as earlier ones dismiss. Applies to every position instantly.
+ */
+function setMaxVisible(count: number): void {
+  maxVisible = Math.max(1, Math.floor(count) || 1);
+  containers.forEach((container) => layout(container));
+}
+
 /** Render arbitrary content (HTML string, element, or a factory) as a toast. */
 function custom(
   content: NonNullable<ToastOptions['content']>,
@@ -1363,12 +1404,17 @@ export interface ToastFn {
   custom: typeof custom;
   close: typeof close;
   closeAll: typeof closeAll;
+  /** Alias of `close` — dismiss one toast by id. */
+  dismiss: typeof close;
+  /** Alias of `closeAll` — dismiss every toast. */
+  dismissAll: typeof closeAll;
   clear: typeof clear;
   update: (id: string, options: Partial<ToastOptions>) => ToastHandle | null;
   get: typeof get;
   exists: typeof exists;
   getCount: typeof getCount;
   setDefaults: typeof setDefaults;
+  setMaxVisible: typeof setMaxVisible;
   setLogger: typeof setLogger;
   injectStyles: typeof injectStyles;
 }
@@ -1388,12 +1434,15 @@ export const toast: ToastFn = Object.assign(
     custom,
     close,
     closeAll,
+    dismiss: close,
+    dismissAll: closeAll,
     clear,
     update,
     get,
     exists,
     getCount,
     setDefaults,
+    setMaxVisible,
     setLogger,
     injectStyles,
   },

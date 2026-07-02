@@ -131,7 +131,7 @@ var css = `/**
   flex-direction: row;
   align-items: flex-start;
   gap: 11px;
-  padding: 14px 16px;
+  padding: 12px 16px;
   color: var(--gat-text);
   background: var(--gat-surface-solid);
   border: none;
@@ -180,6 +180,15 @@ var css = `/**
    cleaner, more minimal card (\xE0 la Sonner/Linear). */
 
 .ga-toast-hide { pointer-events: none; }
+
+/* While a horizontal swipe-to-dismiss is in progress, don't let the drag
+   paint a text selection. Text is fully selectable at rest. */
+.ga-toast-swiping,
+.ga-toast-swiping * {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing;
+}
 
 /* Per-type accent colors. */
 .ga-toast-success { --gat-accent: var(--gat-success); }
@@ -561,7 +570,7 @@ var PREFIX = "ga-toast";
 var STYLE_ID = "ga-toasts-styles";
 var PEEK = 14;
 var STACK_GAP = 14;
-var MAX_VISIBLE = 3;
+var maxVisible = 3;
 var REMOVE_FALLBACK = 450;
 var registry = /* @__PURE__ */ new Map();
 var containers = /* @__PURE__ */ new Map();
@@ -710,6 +719,9 @@ function layout(container) {
     let translateY;
     let scale;
     let opacity;
+    const overflow = frontIndex >= maxVisible;
+    if (overflow) pauseTimer(inst, "overflow");
+    else resumeTimer(inst, "overflow");
     if (expanded || reduce) {
       translateY = dir * cumulative;
       scale = 1;
@@ -717,7 +729,7 @@ function layout(container) {
     } else {
       translateY = dir * frontIndex * PEEK;
       scale = Math.max(1 - frontIndex * 0.05, 0.85);
-      opacity = frontIndex >= MAX_VISIBLE ? 0 : 1;
+      opacity = overflow ? 0 : 1;
     }
     const swipe = inst.swipeX ? ` translateX(${inst.swipeX}px)` : "";
     const ty = position.startsWith("middle") ? `calc(-50% + ${translateY}px)` : `${translateY}px`;
@@ -904,23 +916,26 @@ function buildToastElement(opts, id) {
 function startTimer(inst) {
   const { timer } = inst;
   if (timer.duration <= 0 || timer.remaining <= 0) return;
-  timer.paused = false;
+  if (timer.holds.size > 0) return;
   timer.startedAt = now();
   timer.handle = setTimeout(() => close(inst.id), timer.remaining);
   animateProgress(inst, timer.remaining);
 }
-function pauseTimer(inst) {
+function pauseTimer(inst, reason) {
   const { timer } = inst;
-  if (timer.paused || timer.handle == null) return;
+  const wasHeld = timer.holds.size > 0;
+  timer.holds.add(reason);
+  if (wasHeld || timer.handle == null) return;
   clearTimeout(timer.handle);
   timer.handle = null;
-  timer.paused = true;
   const elapsed = now() - timer.startedAt;
   timer.remaining = Math.max(0, timer.remaining - elapsed);
   freezeProgress(inst);
 }
-function resumeTimer(inst) {
-  if (!inst.timer.paused) return;
+function resumeTimer(inst, reason) {
+  const { timer } = inst;
+  if (!timer.holds.delete(reason)) return;
+  if (timer.holds.size > 0) return;
   startTimer(inst);
 }
 function animateProgress(inst, ms) {
@@ -972,10 +987,10 @@ function attachHandlers(inst, opts) {
     { signal }
   );
   if (opts.pauseOnHover) {
-    el2.addEventListener("pointerenter", () => pauseTimer(inst), { signal });
-    el2.addEventListener("pointerleave", () => resumeTimer(inst), { signal });
-    el2.addEventListener("focusin", () => pauseTimer(inst), { signal });
-    el2.addEventListener("focusout", () => resumeTimer(inst), { signal });
+    el2.addEventListener("pointerenter", () => pauseTimer(inst, "hover"), { signal });
+    el2.addEventListener("pointerleave", () => resumeTimer(inst, "hover"), { signal });
+    el2.addEventListener("focusin", () => pauseTimer(inst, "focus"), { signal });
+    el2.addEventListener("focusout", () => resumeTimer(inst, "focus"), { signal });
   }
   if (opts.swipeToClose) attachSwipe(inst);
   if (opts.modal) {
@@ -1007,6 +1022,7 @@ function attachSwipe(inst) {
   const signal = controller.signal;
   const THRESHOLD = 70;
   let dragging = false;
+  let swiping = false;
   let startX = 0;
   let startY = 0;
   el2.addEventListener(
@@ -1016,9 +1032,10 @@ function attachSwipe(inst) {
       if (e.target.closest("button, a, input, textarea, select"))
         return;
       dragging = true;
+      swiping = false;
       startX = e.clientX;
       startY = e.clientY;
-      pauseTimer(inst);
+      pauseTimer(inst, "swipe");
       try {
         el2.setPointerCapture(e.pointerId);
       } catch {
@@ -1034,6 +1051,12 @@ function attachSwipe(inst) {
       const dy = e.clientY - startY;
       if (Math.abs(dx) < 6 || Math.abs(dx) < Math.abs(dy)) return;
       e.preventDefault();
+      if (!swiping) {
+        swiping = true;
+        el2.classList.add("ga-toast-swiping");
+        const sel = typeof window !== "undefined" && typeof window.getSelection === "function" ? window.getSelection() : null;
+        sel?.removeAllRanges();
+      }
       inst.swipeX = dx;
       const container = el2.parentElement;
       if (container) layout(container);
@@ -1043,6 +1066,8 @@ function attachSwipe(inst) {
   const end = (e) => {
     if (!dragging) return;
     dragging = false;
+    swiping = false;
+    el2.classList.remove("ga-toast-swiping");
     const dx = e.clientX - startX;
     if (Math.abs(dx) > THRESHOLD) {
       const dir = dx > 0 ? 1 : -1;
@@ -1054,7 +1079,7 @@ function attachSwipe(inst) {
       inst.swipeX = 0;
       const container = el2.parentElement;
       if (container) layout(container);
-      resumeTimer(inst);
+      resumeTimer(inst, "swipe");
     }
   };
   el2.addEventListener("pointerup", end, { signal });
@@ -1082,11 +1107,8 @@ function bindVisibility() {
     const hidden = document.hidden;
     for (const inst of registry.values()) {
       if (inst.closing || inst.opts.pauseOnPageHidden === false) continue;
-      if (hidden) {
-        pauseTimer(inst);
-      } else if (!(typeof inst.el.matches === "function" && inst.el.matches(":hover"))) {
-        resumeTimer(inst);
-      }
+      if (hidden) pauseTimer(inst, "tab");
+      else resumeTimer(inst, "tab");
     }
   });
 }
@@ -1143,7 +1165,7 @@ function show(options = {}) {
     remaining: opts.duration || 0,
     startedAt: 0,
     handle: null,
-    paused: false
+    holds: /* @__PURE__ */ new Set()
   };
   const handle = {
     id,
@@ -1475,6 +1497,10 @@ function setDefaults(defaults) {
 function setLogger(fn) {
   logger = typeof fn === "function" ? fn : null;
 }
+function setMaxVisible(count) {
+  maxVisible = Math.max(1, Math.floor(count) || 1);
+  containers.forEach((container) => layout(container));
+}
 function custom(content, options = {}) {
   return show({ ...options, content });
 }
@@ -1492,12 +1518,15 @@ var toast = Object.assign(
     custom,
     close,
     closeAll,
+    dismiss: close,
+    dismissAll: closeAll,
     clear,
     update,
     get,
     exists,
     getCount,
     setDefaults,
+    setMaxVisible,
     setLogger,
     injectStyles
   }
