@@ -446,7 +446,30 @@
       /* Examples */
       .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
       .controls label { font-size: 14px; color: var(--muted); font-weight: 600; }
-      select { border: 1px solid var(--border); background: var(--panel); color: var(--ink); border-radius: 9px; padding: 8px 10px; font-size: 14px; }
+      select {
+        appearance: none; -webkit-appearance: none; -moz-appearance: none;
+        border: 1px solid var(--border);
+        background-color: var(--panel);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 9px 36px 9px 13px;
+        font: inherit; font-size: 14px; font-weight: 600;
+        line-height: 1.2;
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 11px center;
+        background-size: 15px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      select:hover { border-color: var(--accent); }
+      select:focus-visible {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.28);
+      }
+      /* Theme the option list where the browser allows it (dark mode especially). */
+      select option { background: var(--panel); color: var(--ink); }
       .example-wrap { display: grid; grid-template-columns: 1fr; gap: 16px; }
       .code-card { background: var(--code-bg); border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 16px 40px -20px rgba(0,0,0,0.5); }
       .code-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
