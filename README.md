@@ -207,24 +207,84 @@ const handle: ToastHandle = toast.show(opts);
 
 ---
 
-## Theming
+## Configuration & theming
 
-Toggle dark mode with an attribute or class on any ancestor (or let it follow the OS):
+Everything is configurable. Tune the default toaster with `toast.configure(...)` / `toast.theme(...)`, or mint fully **isolated** toasters with `createToaster(config)` — each with its own theme, defaults, icons, and mount root.
 
-```html
-<html data-ga-theme="dark">   <!-- or class="ga-theme-dark" -->
+```js
+import { toast, createToaster } from 'ga-toasts';
+
+// Configure the default (global) toaster:
+toast.configure({
+  defaults: { position: 'bottom-center', duration: 6000 },
+  durations: { error: 10000, success: 2500 }, // per-type auto-close
+  theme: { accent: '#ff5c8a', radius: 8, density: 'compact' },
+});
+
+// …or a shorthand for just the theme (tokens or a preset name):
+toast.theme('minimal');
+toast.theme({ preset: 'minimal', accent: '#ff5c8a', progress: 'ring' });
+
+// An independent toaster (own theme + defaults + DOM root, e.g. shadow DOM):
+const brandToast = createToaster({
+  theme: { accent: brand.primary, radius: 6, font: brand.font },
+  defaults: { position: 'top-center' },
+  root: document.querySelector('#app'),
+});
 ```
 
-Everything is driven by namespaced CSS variables you can override:
+### Presets
+
+`soft` (default) · `solid` · `minimal` · `sharp` · `material`. Use as `theme: 'minimal'` or `theme: { preset: 'minimal', …overrides }`.
+
+### Theme tokens
+
+| Token | Type | Notes |
+|---|---|---|
+| `accent` | color | Primary accent (also the `primary` type). |
+| `colors` | `{ [type]: color }` | Per-type accent colors. |
+| `radius` · `width` · `gap` · `edge` | number \| string | Numbers → px. |
+| `font` | string | Font stack. |
+| `density` | `compact` · `comfortable` · `spacious` | Padding + type scale. |
+| `elevation` | `flat` · `raised` · `floating` | Shadow depth. |
+| `surface` | `glass` · `solid` · `outline` | Card background style. |
+| `accentEdge` | number | Colored leading bar width (0 = none). |
+| `progress` | `bar` · `ring` · `none` | Countdown style (`ring` = circular). |
+| `text` · `textSoft` · `textMuted` · `border` · `shadow` · `chip` · `ease` | | Fine-grained overrides. |
+| `dark` | `Partial<ThemeTokens>` | Overrides applied under the dark theme. |
+
+Theme tokens are written as scoped CSS custom properties, so **dark mode still wins** where you don't override it.
+
+### Escape hatches (total control)
+
+```js
+createToaster({
+  icons: { success: '<svg>…</svg>', close: '<svg>…</svg>' }, // swap icons (null hides one)
+  render: (opts, { id, close }) => myToastElement(opts),      // replace the DOM entirely
+  injectStyles: false,   // headless — ship your own CSS (or import 'ga-toasts/style.css')
+  styleNonce: nonce,     // strict-CSP nonce on the injected <style>
+  stack: { maxVisible: 5, peek: 12, gap: 12, expand: 'always', newestOnTop: true },
+});
+```
+
+### CSS variables
+
+You can also theme purely in CSS — every value is a namespaced `--gat-*` variable:
 
 ```css
 .ga-toast-container {
   --gat-radius: 12px;
   --gat-width: 420px;
   --gat-success: #10b981;
-  --gat-error: #ef4444;
-  --gat-info: #3b82f6;
 }
+```
+
+### Dark mode
+
+Toggle with an attribute or class on any ancestor (or let it follow the OS):
+
+```html
+<html data-ga-theme="dark">   <!-- or class="ga-theme-dark" -->
 ```
 
 ---

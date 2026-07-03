@@ -3,15 +3,18 @@
  *
  * Design goals of the 2.x rewrite:
  *  - Every toast owns its state (element, timer, listeners) in a registry, so
- *    closing/updating never leaves dangling timers or crashes (v1 bug: closing
- *    a toast before its auto-close timer fired threw on `parentNode`).
+ *    closing/updating never leaves dangling timers or crashes.
  *  - Listeners are attached through a per-toast AbortController and torn down in
  *    one call — no `cloneNode` tricks.
- *  - Messages are rendered as text by default (`html: true` to opt into markup),
- *    closing the v1 XSS hole.
+ *  - Messages are rendered as text by default (`html: true` to opt into markup).
  *  - Screen readers are notified through a persistent `aria-live` region.
- *  - The stacked layout is computed in JS (a single transform per toast) so the
- *    enter/leave, swipe, stack-offset and expand-on-hover transforms never fight.
+ *  - The stacked layout is computed in JS (a single transform per toast).
+ *
+ * Configurability (2.1): every instance is minted by `makeToaster(config)`.
+ * The default export `toast` is one such instance; `createToaster(config)`
+ * spins up isolated, independently-themed toasters (own registry, containers,
+ * theme, icons, defaults, mount root). Theming writes `--gat-*` custom
+ * properties through a per-instance scoped <style> so dark-mode rules still win.
  */
 type ToastType = 'success' | 'error' | 'warning' | 'info' | 'primary' | 'secondary' | 'loading';
 type ToastPosition = 'top-start' | 'top-center' | 'top-end' | 'middle-start' | 'middle-center' | 'middle-end' | 'bottom-start' | 'bottom-center' | 'bottom-end';
@@ -125,61 +128,120 @@ interface ToastHandle {
     update(options: Partial<ToastOptions>): ToastHandle;
     close(): void;
 }
-declare function injectStyles(): void;
-declare function show(options?: ToastOptions): ToastHandle;
-declare function close(target: string | HTMLElement | null | undefined): void;
-declare function closeAll(): void;
-declare function clear(type?: ToastType): void;
-declare function getCount(type?: ToastType): number;
-declare function exists(id: string): boolean;
-declare function get(id: string): HTMLElement | null;
-declare const success: (message: string, options?: ToastOptions) => ToastHandle;
-declare const error: (message: string, options?: ToastOptions) => ToastHandle;
-declare const warning: (message: string, options?: ToastOptions) => ToastHandle;
-declare const info: (message: string, options?: ToastOptions) => ToastHandle;
-declare function loading(message?: string, options?: ToastOptions): ToastHandle;
-declare function confirm(message: string, options?: ConfirmOptions): ToastHandle;
-declare function promise<T>(input: Promise<T> | (() => Promise<T>), messages: PromiseMessages<T>, options?: ToastOptions): Promise<T>;
-declare function setDefaults(defaults: ToastOptions): void;
-declare function setLogger(fn: ((event: string, payload: unknown) => void) | null): void;
-/**
- * How many stacked toasts stay visible per position (default 3). Extra toasts
- * queue behind the stack with their countdown paused and surface — resuming
- * their timer — as earlier ones dismiss. Applies to every position instantly.
- */
-declare function setMaxVisible(count: number): void;
-/** Render arbitrary content (HTML string, element, or a factory) as a toast. */
-declare function custom(content: NonNullable<ToastOptions['content']>, options?: ToastOptions): ToastHandle;
+type PresetName = 'soft' | 'solid' | 'minimal' | 'sharp' | 'material';
+/** Design tokens. Any omitted key keeps its default. Numbers → px where sensible. */
+interface ThemeTokens {
+    /** Start from a named preset, then override with the tokens below. */
+    preset?: PresetName;
+    width?: number | string;
+    radius?: number | string;
+    gap?: number | string;
+    edge?: number | string;
+    font?: string;
+    /** Padding + font-size scale. */
+    density?: 'compact' | 'comfortable' | 'spacious';
+    /** Shadow depth preset. */
+    elevation?: 'flat' | 'raised' | 'floating';
+    /** Card background style. */
+    surface?: 'glass' | 'solid' | 'outline';
+    /** Width of the colored leading accent bar (0 = none). */
+    accentEdge?: number | string;
+    /** Countdown indicator style. */
+    progress?: 'bar' | 'ring' | 'none';
+    /** Primary accent (maps to the `primary` type + generic accents). */
+    accent?: string;
+    /** Per-type accent colors. */
+    colors?: Partial<Record<ToastType, string>>;
+    text?: string;
+    textSoft?: string;
+    textMuted?: string;
+    /** Card surface color (sets both frosted + solid tokens). */
+    surfaceColor?: string;
+    border?: string;
+    shadow?: string;
+    chip?: string;
+    ease?: string;
+    /** Token overrides applied only under the dark theme. */
+    dark?: Partial<ThemeTokens>;
+}
+interface StackConfig {
+    /** px each stacked card peeks out when collapsed. */
+    peek?: number;
+    /** px gap between cards when expanded. */
+    gap?: number;
+    /** per-index scale reduction when collapsed (default 0.05). */
+    scaleStep?: number;
+    /** When the stack fans out. `hover` (default), `always`, or `never`. */
+    expand?: 'hover' | 'always' | 'never';
+    /** Reverse stacking so the newest sits at the back. */
+    newestOnTop?: boolean;
+}
+interface RenderContext {
+    id: string;
+    close: () => void;
+}
+interface ToasterConfig {
+    /** Options merged into every toast (per-toast options still win). */
+    defaults?: ToastOptions;
+    /** Per-type default auto-close duration in ms. */
+    durations?: Partial<Record<ToastType, number>>;
+    /** Theme tokens or a named preset. */
+    theme?: ThemeTokens | PresetName;
+    /** Replace built-in icons (per type, `null` to hide) and/or the close icon. */
+    icons?: Partial<Record<ToastType, string | null>> & {
+        close?: string;
+    };
+    /** How many stacked toasts stay visible per position (default 3). */
+    maxVisible?: number;
+    /** Stacking geometry + behavior. */
+    stack?: StackConfig;
+    /** Replace the default toast body with your own element. */
+    render?: (opts: ToastOptions, ctx: RenderContext) => HTMLElement | void;
+    /** `false` → don't auto-inject CSS (ship your own / headless). Default true. */
+    injectStyles?: boolean;
+    /** Nonce set on the injected <style> for strict-CSP apps. */
+    styleNonce?: string;
+    /** Mount containers/live-regions/backdrop here (portals / shadow DOM). */
+    root?: HTMLElement | ShadowRoot;
+    /** Lifecycle/debug event sink. */
+    logger?: (event: string, payload: unknown) => void;
+}
 interface ToastFn {
     (message: string, options?: ToastOptions): ToastHandle;
-    show: typeof show;
-    success: typeof success;
-    error: typeof error;
-    warning: typeof warning;
-    info: typeof info;
-    loading: typeof loading;
-    confirm: typeof confirm;
-    promise: typeof promise;
-    custom: typeof custom;
-    close: typeof close;
-    closeAll: typeof closeAll;
+    show: (options?: ToastOptions) => ToastHandle;
+    success: (message: string, options?: ToastOptions) => ToastHandle;
+    error: (message: string, options?: ToastOptions) => ToastHandle;
+    warning: (message: string, options?: ToastOptions) => ToastHandle;
+    info: (message: string, options?: ToastOptions) => ToastHandle;
+    loading: (message?: string, options?: ToastOptions) => ToastHandle;
+    confirm: (message: string, options?: ConfirmOptions) => ToastHandle;
+    promise: <T>(input: Promise<T> | (() => Promise<T>), messages: PromiseMessages<T>, options?: ToastOptions) => Promise<T>;
+    custom: (content: NonNullable<ToastOptions['content']>, options?: ToastOptions) => ToastHandle;
+    close: (target: string | HTMLElement | null | undefined) => void;
+    closeAll: () => void;
     /** Alias of `close` — dismiss one toast by id. */
-    dismiss: typeof close;
+    dismiss: (target: string | HTMLElement | null | undefined) => void;
     /** Alias of `closeAll` — dismiss every toast. */
-    dismissAll: typeof closeAll;
-    clear: typeof clear;
+    dismissAll: () => void;
+    clear: (type?: ToastType) => void;
     update: (id: string, options: Partial<ToastOptions>) => ToastHandle | null;
-    get: typeof get;
-    exists: typeof exists;
-    getCount: typeof getCount;
-    setDefaults: typeof setDefaults;
-    setMaxVisible: typeof setMaxVisible;
-    setLogger: typeof setLogger;
-    injectStyles: typeof injectStyles;
+    get: (id: string) => HTMLElement | null;
+    exists: (id: string) => boolean;
+    getCount: (type?: ToastType) => number;
+    setDefaults: (defaults: ToastOptions) => void;
+    setMaxVisible: (count: number) => void;
+    setLogger: (fn: ((event: string, payload: unknown) => void) | null) => void;
+    /** Configure this toaster (defaults, theme, icons, stack, headless, …). */
+    configure: (cfg: ToasterConfig) => ToastFn;
+    /** Set theme tokens or a named preset. */
+    theme: (tokens: ThemeTokens | PresetName) => ToastFn;
+    injectStyles: () => void;
 }
-/** Callable shorthand: `toast('Saved')`, plus `toast.success(...)` etc. */
+/** Create an isolated toaster with its own theme, defaults, icons and root. */
+declare function createToaster(config?: ToasterConfig): ToastFn;
+/** The default, globally-shared toaster. */
 declare const toast: ToastFn;
 /** Named object API, backwards-compatible with GA Toasts 1.x. */
 declare const GaToasts: ToastFn;
 
-export { type ConfirmOptions, GaToasts, type PromiseMessages, type ToastAction, type ToastAnimation, type ToastFn, type ToastHandle, type ToastOptions, type ToastPosition, type ToastProgressPosition, type ToastSize, type ToastType, type ToastVariant, toast as default, toast };
+export { type ConfirmOptions, GaToasts, type PresetName, type PromiseMessages, type RenderContext, type StackConfig, type ThemeTokens, type ToastAction, type ToastAnimation, type ToastFn, type ToastHandle, type ToastOptions, type ToastPosition, type ToastProgressPosition, type ToastSize, type ToastType, type ToastVariant, type ToasterConfig, createToaster, toast as default, toast };

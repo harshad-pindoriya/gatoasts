@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { toast, GaToasts } from '../src/index';
+import { toast, GaToasts, createToaster } from '../src/index';
 
 const REMOVE_FALLBACK = 450;
 
@@ -451,6 +451,93 @@ describe('swipe does not paint a text selection', () => {
     ptr('pointermove', 110, 80, h.el); // dy (60) dominates dx (10) → not a swipe
     expect(h.el.classList.contains('ga-toast-swiping')).toBe(false);
     ptr('pointerup', 110, 80, h.el);
+  });
+});
+
+describe('configurability (createToaster / configure / theme)', () => {
+  it('createToaster instances are isolated', () => {
+    const a = createToaster();
+    const b = createToaster();
+    a.info('x', { id: 'iso-a', duration: 0 });
+    b.info('y', { id: 'iso-b', duration: 0 });
+    expect(a.getCount()).toBe(1);
+    expect(b.getCount()).toBe(1);
+    a.closeAll();
+    flushRemovals();
+    expect(a.getCount()).toBe(0);
+    expect(b.getCount()).toBe(1); // b is untouched
+    b.closeAll();
+    flushRemovals();
+  });
+
+  it('configure({ durations }) sets the per-type helper default', () => {
+    const t = createToaster({ durations: { info: 1000 } });
+    t.info('x', { id: 'dur' }); // no explicit duration → uses configured 1000
+    expect(document.getElementById('dur')).not.toBeNull();
+    vi.advanceTimersByTime(1000);
+    flushRemovals();
+    expect(document.getElementById('dur')).toBeNull();
+  });
+
+  it('configure({ icons }) swaps a type icon', () => {
+    const t = createToaster({ icons: { success: '<svg class="cust-ic"></svg>' } });
+    const h = t.success('x', { duration: 0 });
+    expect(h.el.querySelector('.ga-toast-icon .cust-ic')).not.toBeNull();
+    t.closeAll();
+    flushRemovals();
+  });
+
+  it('injectStyles:false injects no stylesheet', () => {
+    document.getElementById('ga-toasts-styles')?.remove();
+    const t = createToaster({ injectStyles: false });
+    t.info('x', { duration: 0 });
+    expect(document.getElementById('ga-toasts-styles')).toBeNull();
+    t.closeAll();
+    flushRemovals();
+  });
+
+  it('render() replaces the toast body', () => {
+    const t = createToaster({
+      render: (o) => {
+        const d = document.createElement('div');
+        d.className = 'rr';
+        d.textContent = o.message || '';
+        return d;
+      },
+    });
+    const h = t.info('hello', { duration: 0 });
+    expect(h.el.querySelector('.ga-toast-custom .rr')?.textContent).toBe('hello');
+    t.closeAll();
+    flushRemovals();
+  });
+
+  it('theme() injects scoped custom-property overrides (tokens + presets)', () => {
+    const t = createToaster();
+    t.theme({ radius: 4, accent: '#ff0066', density: 'compact' });
+    const css = Array.from(
+      document.querySelectorAll('style[id^="ga-toasts-theme-"]'),
+    )
+      .map((s) => s.textContent)
+      .join('');
+    expect(css).toContain('--gat-radius:4px');
+    expect(css).toContain('--gat-primary:#ff0066');
+    expect(css).toContain('--gat-pad-y:8px'); // compact density
+    // preset shorthand also resolves
+    const p = createToaster();
+    p.theme('sharp');
+    const css2 = Array.from(
+      document.querySelectorAll('style[id^="ga-toasts-theme-"]'),
+    )
+      .map((s) => s.textContent)
+      .join('');
+    expect(css2).toContain('--gat-radius:4px');
+  });
+
+  it('the default toast exposes configure/theme/createToaster', () => {
+    expect(typeof toast.configure).toBe('function');
+    expect(typeof toast.theme).toBe('function');
+    expect(typeof createToaster).toBe('function');
+    expect(toast.configure({}).theme).toBe(toast.theme); // chainable, returns the instance
   });
 });
 

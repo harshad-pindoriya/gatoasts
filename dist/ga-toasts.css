@@ -14,6 +14,13 @@
   --gat-gap: 14px;
   --gat-edge: 22px;
 
+  /* Density (padding + type scale) and the optional leading accent bar — all
+     driven by the theme() token API; these are the comfortable defaults. */
+  --gat-pad-y: 12px;
+  --gat-pad-x: 16px;
+  --gat-font-size: 0.875rem;
+  --gat-accent-edge: 0px;
+
   --gat-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
 
@@ -46,8 +53,8 @@
 [data-ga-theme="dark"] .ga-toast-container,
 .ga-theme-dark .ga-toast-container,
 .ga-toast-container.ga-theme-dark {
-  --gat-surface: rgba(24, 27, 34, 0.82);
-  --gat-surface-solid: #191c22;
+  --gat-surface: rgba(30, 34, 44, 0.72);
+  --gat-surface-solid: #22262f;
   --gat-border: rgba(255, 255, 255, 0.09);
   --gat-ring: rgba(255, 255, 255, 0.06);
   --gat-highlight: rgba(255, 255, 255, 0.07);
@@ -130,7 +137,7 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 11px;
-  padding: 12px 16px;
+  padding: var(--gat-pad-y, 12px) var(--gat-pad-x, 16px);
   color: var(--gat-text);
   background: var(--gat-surface-solid);
   border: none;
@@ -147,7 +154,7 @@
     box-shadow 0.2s ease;
   will-change: transform, opacity;
   overflow: hidden;
-  font-size: 0.875rem;
+  font-size: var(--gat-font-size, 0.875rem);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-align: start;
@@ -175,8 +182,26 @@
   -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
-/* No leading accent stripe — the colored icon carries the type identity, for a
-   cleaner, more minimal card (à la Sonner/Linear). */
+/* Outline surface preset — transparent card with a defined hairline edge. */
+.ga-toast-outline {
+  background: transparent;
+  border: 1px solid var(--gat-border);
+  box-shadow: var(--gat-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Optional leading accent bar (theme token `accentEdge`; 0 = hidden). Painted
+   as an inset pseudo so it never shifts layout or gets clipped oddly. */
+.ga-toast::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--gat-accent-edge, 0px);
+  background: var(--gat-accent, var(--gat-info));
+  pointer-events: none;
+}
 
 .ga-toast-hide { pointer-events: none; }
 
@@ -228,6 +253,26 @@
 .ga-toast-icon svg { width: 1.25rem; height: 1.25rem; display: block; overflow: visible; }
 
 .ga-toast-spinner { animation: ga-toast-spin 0.8s linear infinite; }
+
+/* ---- Circular countdown ring (theme progress: 'ring') ---- */
+.ga-toast-icon-ring { position: relative; width: 2rem; height: 2rem; margin-top: 0; }
+.ga-toast-icon-ring > svg:not(.ga-toast-ring) { width: 1.1rem; height: 1.1rem; }
+.ga-toast-ring {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  transform: rotate(-90deg); /* start the sweep at 12 o'clock */
+  overflow: visible;
+}
+.ga-toast-ring-track { fill: none; stroke: var(--gat-chip); stroke-width: 2.4; }
+.ga-toast-ring-bar {
+  fill: none;
+  stroke: var(--gat-accent, var(--gat-info));
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  /* stroke-dasharray / -dashoffset are driven inline by the engine's timer. */
+}
 
 /* Icons draw themselves in on mount (skipped under reduced motion). */
 @media (prefers-reduced-motion: no-preference) {
@@ -477,7 +522,7 @@
 .ga-toast-xs { padding: 10px 13px; font-size: 0.78rem; }
 .ga-toast-xs .ga-toast-icon svg { width: 1.05rem; height: 1.05rem; }
 .ga-toast-xs .ga-toast-message { font-size: 0.78rem; }
-.ga-toast-sm { padding: 12px 15px; }
+.ga-toast-sm { padding: 11px 14px; gap: 9px; }
 .ga-toast-lg { padding: 18px 20px; }
 .ga-toast-lg .ga-toast-title { font-size: 1rem; }
 .ga-toast-lg .ga-toast-message { font-size: 0.95rem; }
