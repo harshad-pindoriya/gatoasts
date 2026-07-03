@@ -1092,10 +1092,9 @@
         T.theme(buildTheme()); // an empty object resets to the defaults
         renderCode();
         clearTimeout(themeFireTimer);
-        themeFireTimer = setTimeout(() => {
-          if (themePreview) showThemePreview();               // re-fire so structural changes (surface/ring) show
-          else if (last && last.el && last.el.isConnected) fire();
-        }, 160);
+        // Show/refresh the sticky preview only in response to an actual theme tweak —
+        // never on merely opening the Theme tab. A live toast is needed to judge the styling.
+        themeFireTimer = setTimeout(showThemePreview, 160);
       }
       function setRangeFill(el) {
         const min = +el.min || 0, max = +el.max || 100;
@@ -1125,7 +1124,9 @@
           TABS[k][0].setAttribute('aria-selected', String(on));
           TABS[k][1].hidden = !on;
         }
-        if (name === 'theme') showThemePreview(); else closeThemePreview();
+        // Opening the Theme tab no longer auto-fires a toast; the sticky preview
+        // appears once the user adjusts a theme control (see applyToastTheme).
+        if (name !== 'theme') closeThemePreview();
       }
       $('tab-toast').addEventListener('click', () => selectTab('toast'));
       $('tab-theme').addEventListener('click', () => selectTab('theme'));
