@@ -453,3 +453,33 @@ describe('swipe does not paint a text selection', () => {
     ptr('pointerup', 110, 80, h.el);
   });
 });
+
+describe('hover-expand anti-flicker', () => {
+  function ptr(type: string, target: EventTarget) {
+    target.dispatchEvent(new MouseEvent(type, { bubbles: false }));
+  }
+
+  it('debounces collapse: crossing gaps keeps the stack expanded, a real exit collapses', () => {
+    for (let i = 0; i < 5; i++) toast.info('n' + i, { position: 'top-start', duration: 0 });
+    const container = document.querySelector('.ga-toast-container-top-start') as HTMLElement;
+
+    ptr('pointerenter', container);
+    expect(container.dataset.gaExpanded).toBe('true');
+
+    // Gap crossing: the pointer briefly leaves the stack then re-enters the next
+    // card before COLLAPSE_DELAY elapses — the re-enter must cancel the collapse.
+    ptr('pointerleave', container);
+    vi.advanceTimersByTime(60); // < 140ms delay
+    ptr('pointerenter', container);
+    vi.advanceTimersByTime(300);
+    expect(container.dataset.gaExpanded).toBe('true'); // never flickered closed
+
+    // A genuine exit collapses once the grace period passes.
+    ptr('pointerleave', container);
+    vi.advanceTimersByTime(160); // > 140ms delay
+    expect(container.dataset.gaExpanded).toBe('false');
+
+    toast.closeAll();
+    flushRemovals();
+  });
+});

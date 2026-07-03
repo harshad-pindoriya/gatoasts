@@ -1,7 +1,7 @@
 {
   "name": "ga-toasts",
   "version": "2.0.0",
-  "description": "Modern, accessible, dependency-free toast notifications for the web. Stacked animations, 6 types, 9 positions, dark mode, swipe-to-dismiss, and first-class TypeScript support.",
+  "description": "Modern, accessible, dependency-free toast notifications for the web. Stacked animations, 7 types, 9 positions, dark mode, swipe-to-dismiss, and first-class TypeScript support.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -11,9 +11,14 @@
   "style": "./dist/ga-toasts.css",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./style.css": "./dist/ga-toasts.css",
     "./ga-toasts.css": "./dist/ga-toasts.css",

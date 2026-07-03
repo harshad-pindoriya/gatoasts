@@ -169,6 +169,7 @@ const PEEK = 14; // px each stacked card peeks out when collapsed
 const STACK_GAP = 14; // px gap between cards when expanded
 let maxVisible = 3; // stacked cards shown before the rest wait their turn (see setMaxVisible)
 const REMOVE_FALLBACK = 450; // ms — safety net if transitionend never fires
+const COLLAPSE_DELAY = 140; // ms — grace period before an un-hovered stack collapses (anti-flicker)
 
 interface TimerState {
   duration: number;
@@ -349,8 +350,31 @@ function getContainer(position: ToastPosition): HTMLElement {
   container.setAttribute('role', 'region');
   container.setAttribute('aria-label', 'Notifications');
 
-  const expand = () => setExpanded(container, true);
-  const collapse = () => setExpanded(container, false);
+  // Expand on hover/focus, but DEBOUNCE the collapse: when the pointer crosses
+  // one of the transparent gaps between fanned-out cards it briefly leaves the
+  // stack (which is just the union of the absolutely-positioned toast boxes),
+  // firing pointerleave then pointerenter a few ms apart. Collapsing immediately
+  // would snap the cards back under the pointer and re-trigger expand — a jittery
+  // loop. Deferring the collapse lets the re-enter cancel it, so only a real exit
+  // collapses the stack.
+  let collapseTimer: ReturnType<typeof setTimeout> | null = null;
+  const cancelCollapse = () => {
+    if (collapseTimer != null) {
+      clearTimeout(collapseTimer);
+      collapseTimer = null;
+    }
+  };
+  const expand = () => {
+    cancelCollapse();
+    setExpanded(container, true);
+  };
+  const collapse = () => {
+    cancelCollapse();
+    collapseTimer = setTimeout(() => {
+      collapseTimer = null;
+      setExpanded(container, false);
+    }, COLLAPSE_DELAY);
+  };
   container.addEventListener('pointerenter', expand);
   container.addEventListener('pointerleave', collapse);
   container.addEventListener('focusin', expand);
