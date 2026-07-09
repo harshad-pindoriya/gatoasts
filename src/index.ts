@@ -43,7 +43,16 @@ export type ToastPosition =
   | 'bottom-center'
   | 'bottom-end';
 
-export type ToastAnimation = 'fade' | 'slide' | 'bounce' | 'scale';
+export type ToastAnimation =
+  | 'fade'
+  | 'slide'
+  | 'bounce'
+  | 'scale'
+  | 'zoom'
+  | 'flip'
+  | 'swing'
+  | 'drop'
+  | 'none';
 export type ToastVariant = '' | 'filled' | 'light';
 export type ToastSize = '' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type ToastProgressPosition = 'top' | 'bottom' | 'none';
@@ -413,13 +422,94 @@ function isRTL(): boolean {
   return dir === 'rtl';
 }
 
-function offscreenTransform(position: ToastPosition): string {
-  const inFromLeft = 'translateX(-115%)';
-  const inFromRight = 'translateX(115%)';
+interface Motion {
+  /** Any <length-percentage>, e.g. `0px`, `-115%`, `calc(-50% + 8px)`. */
+  y?: string;
+  x?: string;
+  scale?: number;
+  /** Degrees, 2D only — a 3D rotation would leave the card in a 3D context. */
+  rotate?: number;
+}
+
+/**
+ * The one shape every inline transform takes.
+ *
+ * All three writers — layout(), the off-stage transform below, and the swipe
+ * fling — emit this exact function list. Matching lists let the browser
+ * interpolate each component independently; mismatched ones force it to
+ * decompose two matrices instead, which drags translate along a curved path
+ * whenever a rotation is also in flight.
+ */
+function composeTransform({
+  y = '0px',
+  x = '0px',
+  scale = 1,
+  rotate = 0,
+}: Motion): string {
+  return `translateY(${y}) translateX(${x}) scale(${scale}) rotate(${rotate}deg)`;
+}
+
+/**
+ * Middle stacks carry a -50% self-offset in every transform they ever hold.
+ * The sign is folded into the operator so a negative offset reads `calc(-50% -
+ * 140%)` rather than the legal-but-alarming `calc(-50% + -140%)`.
+ */
+function stackY(position: ToastPosition, offset = '0px'): string {
+  if (!position.startsWith('middle')) return offset;
+  const negative = offset.startsWith('-');
+  return `calc(-50% ${negative ? '-' : '+'} ${negative ? offset.slice(1) : offset})`;
+}
+
+/**
+ * Where a toast sits while off-stage — before it enters, and after it exits.
+ * The engine transitions between this and the resting transform layout() writes,
+ * so a preset is exactly a starting point plus the CSS timing keyed off its
+ * `ga-toast-anim-*` class. Presets that park at rest (`fade`, `none`) let
+ * opacity carry the whole effect; the rest travel, scale, or rotate into place.
+ */
+function offscreenTransform(
+  position: ToastPosition,
+  animation?: ToastAnimation,
+): string {
+  const y = stackY(position);
   const rtl = isRTL();
-  if (position.endsWith('start')) return rtl ? inFromRight : inFromLeft;
-  if (position.endsWith('end')) return rtl ? inFromLeft : inFromRight;
-  return verticalDir(position) === 1 ? 'translateY(-140%)' : 'translateY(140%)';
+  const edge = position.endsWith('start')
+    ? rtl
+      ? '115%'
+      : '-115%'
+    : position.endsWith('end')
+      ? rtl
+        ? '-115%'
+        : '115%'
+      : null;
+  const offY = stackY(position, verticalDir(position) === 1 ? '-140%' : '140%');
+
+  switch (animation) {
+    case 'none':
+    case 'fade':
+      return composeTransform({ y });
+    case 'scale':
+      return composeTransform({ y, scale: 0.75 });
+    case 'zoom':
+      return composeTransform({ y, scale: 1.25 });
+    case 'drop':
+      // Falls from overhead whatever edge the stack is anchored to.
+      return composeTransform({ y: stackY(position, '-160%') });
+    case 'flip':
+      // The only preset that needs 3D. perspective() sits after the shared list
+      // so it scopes just the rotateX, and none of it survives to the resting
+      // transform — the card is back in a 2D context, and crisp, once landed.
+      return `${composeTransform({ y })} perspective(900px) rotateX(-88deg)`;
+    case 'swing':
+      // Tilt away from the direction of travel, then let the overshoot easing
+      // carry the rotation back through zero like a pendulum losing energy.
+      return edge
+        ? composeTransform({ y, x: edge, rotate: edge.startsWith('-') ? -7 : 7 })
+        : composeTransform({ y: offY, rotate: -7 });
+    default:
+      // slide, bounce — same path in from the nearest edge, different easing.
+      return edge ? composeTransform({ y, x: edge }) : composeTransform({ y: offY });
+  }
 }
 
 function swipeOpacity(dx: number): number {
@@ -726,11 +816,11 @@ function makeToaster(config: ToasterConfig = {}): ToastFn {
         opacity = overflow ? 0 : 1;
       }
 
-      const swipe = inst.swipeX ? ` translateX(${inst.swipeX}px)` : '';
-      const ty = position.startsWith('middle')
-        ? `calc(-50% + ${translateY}px)`
-        : `${translateY}px`;
-      inst.el.style.transform = `translateY(${ty})${swipe} scale(${scale})`;
+      inst.el.style.transform = composeTransform({
+        y: stackY(position, `${translateY}px`),
+        x: inst.swipeX ? `${inst.swipeX}px` : '0px',
+        scale,
+      });
       inst.el.style.opacity = inst.swipeX
         ? String(swipeOpacity(inst.swipeX))
         : String(opacity);
@@ -857,7 +947,7 @@ function makeToaster(config: ToasterConfig = {}): ToastFn {
       `ga-toast-${type}`,
       opts.size ? `ga-toast-${opts.size}` : '',
       opts.variant ? `ga-toast-${type}-${opts.variant}` : '',
-      opts.animation || '',
+      opts.animation ? `ga-toast-anim-${opts.animation}` : '',
       opts.compact ? 'ga-toast-compact' : '',
       glass ? 'ga-toast-glass' : '',
       surfaceMode === 'outline' ? 'ga-toast-outline' : '',
@@ -1204,7 +1294,10 @@ function makeToaster(config: ToasterConfig = {}): ToastFn {
       if (Math.abs(dx) > THRESHOLD) {
         const dir = dx > 0 ? 1 : -1;
         inst.el.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-        inst.el.style.transform = `translateX(${dir * 400}px)`;
+        inst.el.style.transform = composeTransform({
+          y: stackY(inst.opts.position),
+          x: `${dir * 400}px`,
+        });
         inst.el.style.opacity = '0';
         close(inst.id);
       } else {
@@ -1345,7 +1438,7 @@ function makeToaster(config: ToasterConfig = {}): ToastFn {
 
     const container = getContainer(opts.position);
 
-    el.style.transform = offscreenTransform(opts.position);
+    el.style.transform = offscreenTransform(opts.position, opts.animation);
     el.style.opacity = '0';
     container.appendChild(el);
 
@@ -1419,7 +1512,10 @@ function makeToaster(config: ToasterConfig = {}): ToastFn {
     if (!inst.swipeX) {
       el.style.transition = '';
       el.classList.add('ga-toast-hide');
-      el.style.transform = offscreenTransform(inst.opts.position);
+      el.style.transform = offscreenTransform(
+        inst.opts.position,
+        inst.opts.animation,
+      );
       el.style.opacity = '0';
     }
 

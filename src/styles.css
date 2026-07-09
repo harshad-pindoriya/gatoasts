@@ -149,8 +149,8 @@
   opacity: 0;
   transform: translateY(-140%);
   transition:
-    transform 0.5s var(--gat-ease),
-    opacity 0.35s ease,
+    transform var(--gat-move-dur, 0.5s) var(--gat-move-ease, var(--gat-ease)),
+    opacity var(--gat-fade-dur, 0.35s) ease,
     box-shadow 0.2s ease;
   will-change: transform, opacity;
   overflow: hidden;
@@ -204,6 +204,56 @@
 }
 
 .ga-toast-hide { pointer-events: none; }
+
+/* ---------------- Enter/exit animations (`animation` option) ----------------
+   The engine writes `transform` inline on every frame it stacks or swipes, so
+   a variant cannot ship keyframes or a transform rule of its own — the inline
+   value outranks both. Each one instead retimes the transform the engine is
+   already interpolating, while offscreenTransform() in index.ts picks the
+   matching starting point. `fade` and `slide` are the defaults, so they need
+   no declarations; they exist as classes purely as styling hooks. */
+   Opacity timing is what separates `scale` from `fade`. Run them at the same
+   speed and the card is still translucent while it grows, so the eye reads the
+   opacity and the geometry is lost — the two variants become the same effect.
+   `scale` therefore snaps opaque early and lets the pop play out on a solid
+   card, while `fade` stretches opacity to become the whole animation. */
+.ga-toast-anim-fade {
+  --gat-fade-dur: 0.4s;
+}
+.ga-toast-anim-scale {
+  --gat-move-dur: 0.42s;
+  --gat-move-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --gat-fade-dur: 0.16s;
+}
+.ga-toast-anim-bounce {
+  --gat-move-dur: 0.62s;
+  --gat-move-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* Shrinking into place, so no overshoot — it would dip under 1 and squash. */
+.ga-toast-anim-zoom {
+  --gat-move-dur: 0.36s;
+  --gat-move-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --gat-fade-dur: 0.16s;
+}
+.ga-toast-anim-swing {
+  --gat-move-dur: 0.58s;
+  --gat-move-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* A control point below 0 winds up before the fall; one above 1 lands hard. */
+.ga-toast-anim-drop {
+  --gat-move-dur: 0.52s;
+  --gat-move-ease: cubic-bezier(0.6, -0.28, 0.735, 1.28);
+  --gat-fade-dur: 0.18s;
+}
+.ga-toast-anim-flip {
+  --gat-move-dur: 0.5s;
+  --gat-move-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --gat-fade-dur: 0.14s;
+}
+/* Opt out entirely: the toast is simply there, then simply gone. */
+.ga-toast-anim-none {
+  transition: none;
+}
 
 /* While a horizontal swipe-to-dismiss is in progress, don't let the drag
    paint a text selection. Text is fully selectable at rest. */

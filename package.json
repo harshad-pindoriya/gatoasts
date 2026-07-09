@@ -1,6 +1,6 @@
 {
   "name": "ga-toasts",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Modern, accessible, dependency-free toast notifications for the web. Fully themeable (createToaster + design tokens), stacked animations, 7 types, 9 positions, dark mode, swipe-to-dismiss, and first-class TypeScript support.",
   "type": "module",
   "main": "./dist/index.cjs",

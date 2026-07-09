@@ -18,7 +18,7 @@
  */
 type ToastType = 'success' | 'error' | 'warning' | 'info' | 'primary' | 'secondary' | 'loading';
 type ToastPosition = 'top-start' | 'top-center' | 'top-end' | 'middle-start' | 'middle-center' | 'middle-end' | 'bottom-start' | 'bottom-center' | 'bottom-end';
-type ToastAnimation = 'fade' | 'slide' | 'bounce' | 'scale';
+type ToastAnimation = 'fade' | 'slide' | 'bounce' | 'scale' | 'zoom' | 'flip' | 'swing' | 'drop' | 'none';
 type ToastVariant = '' | 'filled' | 'light';
 type ToastSize = '' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 type ToastProgressPosition = 'top' | 'bottom' | 'none';

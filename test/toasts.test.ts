@@ -570,3 +570,183 @@ describe('hover-expand anti-flicker', () => {
     flushRemovals();
   });
 });
+
+describe('animation option drives a visible enter effect', () => {
+  /**
+   * setup.ts runs rAF callbacks synchronously, so by the time show() returns the
+   * toast is already mounted and layout() has overwritten the inline transform
+   * with its resting value. Hold the callbacks back to observe the off-stage
+   * transform — the one that decides what the enter actually looks like.
+   */
+  function showOffStage(options: Parameters<typeof toast.show>[0]) {
+    const raf = globalThis.requestAnimationFrame;
+    const queue: FrameRequestCallback[] = [];
+    globalThis.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+      queue.push(cb);
+      return 0;
+    }) as typeof requestAnimationFrame;
+    try {
+      const h = toast.show(options);
+      const start = h.el.style.transform;
+      while (queue.length) queue.splice(0).forEach((cb) => cb(0));
+      return { h, start, resting: h.el.style.transform };
+    } finally {
+      globalThis.requestAnimationFrame = raf;
+    }
+  }
+
+  /** Body of an injected rule, e.g. `--gat-move-dur:.42s;--gat-fade-dur:.16s`. */
+  function cssRule(className: string): string {
+    const body = cssRuleOrEmpty(className);
+    if (!body) throw new Error(`no injected rule for .${className}`);
+    return body;
+  }
+
+  /** Same, but `slide` ships no rule at all — it *is* the base timing. */
+  function cssRuleOrEmpty(className: string): string {
+    const css = document.getElementById('ga-toasts-styles')?.textContent ?? '';
+    return css.match(new RegExp(`\\.${className}\\{([^}]*)\\}`))?.[1] ?? '';
+  }
+
+  /** Reads a `--gat-<name>: .42s` custom property out of a rule body. */
+  function seconds(rule: string, name: string): number {
+    const raw = rule.match(new RegExp(`--gat-${name}: ?(\\d*\\.?\\d+)s`))?.[1];
+    if (raw === undefined) throw new Error(`--gat-${name} missing from ${rule}`);
+    return Number(raw);
+  }
+
+  it('namespaces the class hook instead of leaking a bare `bounce`/`fade`', () => {
+    const h = toast.show({ message: 'hi', animation: 'bounce' });
+    expect(h.el.classList.contains('ga-toast-anim-bounce')).toBe(true);
+    expect(h.el.classList.contains('bounce')).toBe(false);
+  });
+
+  /** Every preset, and the off-stage transform that defines how it enters. */
+  const PRESETS = {
+    fade: 'translateY(0px) translateX(0px) scale(1) rotate(0deg)',
+    none: 'translateY(0px) translateX(0px) scale(1) rotate(0deg)',
+    scale: 'translateY(0px) translateX(0px) scale(0.75) rotate(0deg)',
+    zoom: 'translateY(0px) translateX(0px) scale(1.25) rotate(0deg)',
+    slide: 'translateY(0px) translateX(115%) scale(1) rotate(0deg)',
+    bounce: 'translateY(0px) translateX(115%) scale(1) rotate(0deg)',
+    swing: 'translateY(0px) translateX(115%) scale(1) rotate(7deg)',
+    drop: 'translateY(-160%) translateX(0px) scale(1) rotate(0deg)',
+    flip: 'translateY(0px) translateX(0px) scale(1) rotate(0deg) perspective(900px) rotateX(-88deg)',
+  } as const;
+
+  const REST = 'translateY(0px) translateX(0px) scale(1) rotate(0deg)';
+
+  it.each(Object.entries(PRESETS))('%s enters from its own off-stage transform', (animation, from) => {
+    const { start, resting } = showOffStage({
+      message: 'hi',
+      animation: animation as keyof typeof PRESETS,
+      position: 'top-end',
+    });
+    expect(start).toBe(from);
+    expect(resting).toBe(REST);
+  });
+
+  it('gives every preset a signature no other preset shares', () => {
+    // A preset is its starting transform *and* its timing: `slide` and `bounce`
+    // travel the identical path and are told apart only by easing, while `fade`
+    // and `none` both start at rest and are told apart only by transition. So
+    // neither half alone is a fair uniqueness check — the pair is.
+    toast.info('warm the stylesheet'); // injected on first show, not at import
+    const signatures = Object.entries(PRESETS).map(
+      ([name, from]) => `${from}|${cssRuleOrEmpty(`ga-toast-anim-${name}`)}`,
+    );
+    expect(cssRuleOrEmpty('ga-toast-anim-bounce')).not.toBe('');
+    expect(new Set(signatures).size).toBe(signatures.length);
+  });
+
+  it('parks fade and none at rest so opacity carries the whole effect', () => {
+    for (const animation of ['fade', 'none'] as const) {
+      const { start, resting } = showOffStage({ message: 'hi', animation });
+      expect(start).toBe(resting);
+      toast.closeAll();
+      flushRemovals();
+    }
+  });
+
+  it('scale starts shrunk and zoom starts oversized — opposite energies', () => {
+    const grab = (t: string) => Number(t.match(/scale\((\d*\.?\d+)\)/)?.[1]);
+    expect(grab(PRESETS.scale)).toBeLessThan(1);
+    expect(grab(PRESETS.zoom)).toBeGreaterThan(1);
+  });
+
+  it('scale, zoom and flip finish fading well before they finish moving', () => {
+    // If the card is still translucent while it moves, the eye reads the fade
+    // and the preset collapses into `fade`.
+    for (const name of ['scale', 'zoom', 'flip'] as const) {
+      const rule = cssRule(`ga-toast-anim-${name}`);
+      expect(seconds(rule, 'fade-dur')).toBeLessThan(seconds(rule, 'move-dur') / 2);
+    }
+  });
+
+  it('swing tilts away from the direction it travels', () => {
+    const rot = (t: string) => Number(t.match(/rotate\((-?\d*\.?\d+)deg\)/)?.[1]);
+    const fromRight = showOffStage({ message: 'hi', animation: 'swing', position: 'top-end' });
+    expect(rot(fromRight.start)).toBeGreaterThan(0);
+    toast.closeAll();
+    flushRemovals();
+
+    const fromLeft = showOffStage({ message: 'hi', animation: 'swing', position: 'top-start' });
+    expect(rot(fromLeft.start)).toBeLessThan(0);
+  });
+
+  it('drop always falls from overhead, even on a bottom-anchored stack', () => {
+    const { start } = showOffStage({
+      message: 'hi',
+      animation: 'drop',
+      position: 'bottom-center',
+    });
+    expect(start).toBe('translateY(-160%) translateX(0px) scale(1) rotate(0deg)');
+  });
+
+  it('keeps every off-stage transform on the same function list as layout()', () => {
+    // Mismatched lists force the browser to decompose two matrices instead of
+    // interpolating component-wise. `flip` opts into that knowingly — it is the
+    // only preset needing 3D, and perspective() has no counterpart at rest.
+    const fns = (t: string) => t.match(/[a-zA-Z]+(?=\()/g) ?? [];
+    for (const animation of Object.keys(PRESETS) as (keyof typeof PRESETS)[]) {
+      if (animation === 'flip') continue;
+      const { start, resting } = showOffStage({ message: 'hi', animation });
+      expect(fns(start)).toEqual(fns(resting));
+      toast.closeAll();
+      flushRemovals();
+    }
+    expect(fns(PRESETS.flip).slice(0, 4)).toEqual(fns(REST));
+  });
+
+  it('folds the sign into the calc() rather than emitting `+ -140%`', () => {
+    const { start } = showOffStage({
+      message: 'hi',
+      animation: 'slide',
+      position: 'middle-center',
+    });
+    expect(start).toContain('calc(-50% - 140%)');
+  });
+
+  it('middle stacks start at the -50% they rest at, so they do not drift', () => {
+    for (const position of ['middle-start', 'middle-center'] as const) {
+      const { start, resting } = showOffStage({ message: 'hi', animation: 'fade', position });
+      expect(start).toBe('translateY(calc(-50% + 0px)) translateX(0px) scale(1) rotate(0deg)');
+      expect(start).toBe(resting);
+      toast.closeAll();
+      flushRemovals();
+    }
+  });
+
+  it('bounce overshoots past its resting point; slide keeps the default easing', () => {
+    // A y-control-point above 1 is what carries the transform past its target
+    // and back — without it `bounce` is just a slower `slide`.
+    const y = Number(
+      cssRule('ga-toast-anim-bounce').match(/cubic-bezier\([^,]+, ?(\d*\.?\d+)/)?.[1],
+    );
+    expect(y).toBeGreaterThan(1);
+
+    const css = document.getElementById('ga-toasts-styles')?.textContent ?? '';
+    expect(css).toMatch(/transform var\(--gat-move-dur/);
+    expect(() => cssRule('ga-toast-anim-slide')).toThrow(); // defaults, no overrides
+  });
+});
