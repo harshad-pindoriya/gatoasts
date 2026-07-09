@@ -35,6 +35,7 @@
   "scripts": {
     "gen": "node scripts/gen-styles.mjs",
     "build": "npm run gen && tsup",
+    "build:site": "npm run build && node scripts/build-site.mjs",
     "dev": "npm run gen && tsup --watch",
     "test": "npm run gen && vitest run",
     "test:watch": "npm run gen && vitest",

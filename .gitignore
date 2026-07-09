@@ -1,6 +1,9 @@
 node_modules/
 src/styles.generated.ts
 
+# Assembled static site for Vercel (scripts/build-site.mjs). Generated on deploy.
+public/
+
 # dist/ is committed so the GitHub Pages demo (index.html) works without CI.
 # It is rebuilt with `npm run build`.
 *.log
