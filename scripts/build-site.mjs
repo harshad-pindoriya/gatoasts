@@ -1,4 +1,4 @@
-// Assembles the static marketing/demo site (ga-toasts.com) into public/ so
+// Assembles the static marketing/demo site (gatoasts.vercel.app) into public/ so
 // Vercel has an Output Directory to serve. This repo is dual-purpose: an npm
 // library (built into dist/ by tsup) AND its landing page (index.html, which
 // loads dist/ga-toasts.global.js). `npm run build` stays library-only because

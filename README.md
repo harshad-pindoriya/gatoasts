@@ -16,7 +16,7 @@ Modern, accessible, **dependency-free** toast notifications for the web.
 - 🧵 **Framework-agnostic** — use it in React, Vue, Svelte, plain HTML, or on the server (SSR-safe no-op).
 - 🟦 **First-class TypeScript** — types ship in the box.
 
-**Live demo:** https://harshad-pindoriya.github.io/gatoasts/
+**Live demo:** https://gatoasts.vercel.app/
 
 ---
 
