@@ -3,6 +3,7 @@
 Modern, accessible, **dependency-free** toast notifications for the web.
 
 [![npm](https://img.shields.io/npm/v/ga-toasts.svg)](https://www.npmjs.com/package/ga-toasts)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/ga-toasts)](https://bundlephobia.com/package/ga-toasts)
 [![types](https://img.shields.io/badge/TypeScript-included-3178c6.svg)](#typescript)
 [![deps](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](#)
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
@@ -17,6 +18,10 @@ Modern, accessible, **dependency-free** toast notifications for the web.
 - 🟦 **First-class TypeScript** — types ship in the box.
 
 **Live demo:** https://gatoasts.vercel.app/
+
+<!-- Tip: a short screen-capture GIF here is the single biggest lever for GitHub stars & click-through.
+     Record the live demo, save it as images/demo.gif, then uncomment the line below:
+     ![GA Toasts in action](images/demo.gif) -->
 
 ---
 
